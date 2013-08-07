@@ -1,0 +1,2 @@
+g++ -m32 -Wall -fPIC -g -c cpptest_plugin.cpp
+g++ -m32 -shared -Wl,-soname,cpptest.so -o cpptest.so cpptest_plugin.o

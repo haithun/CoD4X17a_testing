@@ -1,0 +1,6 @@
+gcc -g -m32 -Wall -O1 -s -fvisibility=hidden -mtune=core2 -c *.c
+cd ..
+gcc -g -m32 -Wall -O1 -s -fvisibility=hidden -mtune=core2 -c *.c
+cd censor
+
+gcc -m32 -s -shared -fvisibility=hidden -o censor.so *.o ../*.o

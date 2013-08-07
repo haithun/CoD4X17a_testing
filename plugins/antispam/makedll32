@@ -1,0 +1,2 @@
+gcc -m32 -Wall -fPIC -g -c antispam_plugin.c
+gcc -m32 -shared -Wl,-soname,antispam.so -o antispam.so  *.o
