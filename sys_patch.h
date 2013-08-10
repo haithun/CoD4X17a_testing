@@ -8,7 +8,7 @@
 #define IMAGE_BASE 0x8048000
 
 void Sys_PatchImageWithBlock(byte *block, int blocksize);
-void Sys_PatchImageData( void *ptr );
+void Sys_PatchImageData( void );
 qboolean Sys_PatchImage();
 DWORD SetCall(DWORD addr, void* destination);
 DWORD SetCallFSO(DWORD addr, void* destination);

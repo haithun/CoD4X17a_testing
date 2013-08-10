@@ -61,7 +61,7 @@ void Sys_PatchImageWithBlock(byte *block, int blocksize)
 
 }
 
-void Sys_PatchImageData( void *ptr )
+void Sys_PatchImageData( void )
 {
 
 static byte patchblock_01[] = { 0xAE, 0xA, 0x5, 0x8, 
@@ -181,30 +181,30 @@ static byte patchblock_NET_OOB_CALL3[] = { 0x41, 0xB5, 0x17, 0x8,
 	SetJump(0x80a8068, ClientUserinfoChanged);
 
 	//ToDo build Mem_Init() on its own
-/*
+
 	*(char*)0x8215ccc = '\n'; //adds a missing linebreak
 	*(char*)0x8222ebc = '\n'; //adds a missing linebreak
 	*(char*)0x8222ebd = '\0'; //adds a missing linebreak
-*/
+
 }
 
 
 qboolean Sys_PatchImage()
 {
 
-        void* ptr;
-        int size;
-
-        ptr = (void*)(IMAGE_BASE + TEXT_SECTION_OFFSET);
-
-	size = TEXT_SECTION_LENGTH;
-
-	if(!Sys_MemoryProtectWrite(ptr, size))
+	if(!Sys_MemoryProtectWrite((void*)(IMAGE_BASE + TEXT_SECTION_OFFSET), TEXT_SECTION_LENGTH))
 		return qfalse;
 
-	Sys_PatchImageData( ptr );
+	if(!Sys_MemoryProtectWrite((void*)(IMAGE_BASE + RODATA_SECTION_OFFSET), RODATA_SECTION_LENGTH))
+		return qfalse;
 
-	if(!Sys_MemoryProtectExec(ptr, size))
+
+	Sys_PatchImageData( );
+
+	if(!Sys_MemoryProtectExec((void*)(IMAGE_BASE + TEXT_SECTION_OFFSET), TEXT_SECTION_LENGTH))
+		return qfalse;
+
+	if(!Sys_MemoryProtectReadonly((void*)(IMAGE_BASE + RODATA_SECTION_OFFSET), RODATA_SECTION_LENGTH))
 		return qfalse;
 
 	return qtrue;
