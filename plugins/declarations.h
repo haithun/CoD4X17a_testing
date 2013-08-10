@@ -53,8 +53,8 @@ typedef struct{		// A structure representing a player's scoreboard
 }clientScoreboard_t;
 
 
-#include "plugin_declarations.h"	// Function descriptions are available in this file as well
-#include "function_declarations.h"
+#include "plugin_declarations.h"
+#include "function_declarations.h" // Function descriptions are available in this file
 
 typedef enum{
     CVAR_BOOL,

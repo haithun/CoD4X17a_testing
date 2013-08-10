@@ -1,4 +1,4 @@
-#define PLUGIN_HANDLER_VERSION 1.1
+#define PLUGIN_HANDLER_VERSION 1.2
 enum Plugin_Err{	// To be used as the code argument for Plugin_Error()
     P_ERROR_WARNING,	// Save the error string to serverlog - for minor errors
     P_ERROR_DISABLE,	// Save the error string to serverlog and disable the plugin - for serious errors
