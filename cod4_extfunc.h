@@ -92,6 +92,8 @@ typedef enum {qfalse, qtrue}	qboolean;
 #define MAX_CHALLENGES_MULTI (MAX_CHALLENGES / 2)
 
 
+#define HOMEPATH_NAME_UNIX ".callofduty4"
+
 
 #define	MAX_STRING_TOKENS	1024	// max tokens resulting from Cmd_TokenizeString
 #define	MAX_STRING_CHARS	1024
@@ -508,7 +510,7 @@ typedef struct usercmd_s {//Not Known
 #define Com_Memset memset
 #define Com_Memcpy memcpy
 
-
+#include "cvar.h"
 #include "game.h"
 
 

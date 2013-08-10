@@ -171,3 +171,8 @@ DLL_PUBLIC __cdecl __optimize3 float Jump_CalcHeight( playerState_t* ps ) {
 
 	return val;
 }
+
+DLL_PUBLIC __cdecl __optimize3 void StuckInClient( gentity_t* gen )
+{
+
+}

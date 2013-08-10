@@ -576,3 +576,4 @@ void SV_SayToPlayers(int clnum, int team, char* text);
 __optimize3 __regparm2 void SV_ExecuteClientMessage( client_t *cl, msg_t *msg );
 
 void SV_GetUserinfo( int index, char *buffer, int bufferSize );
+const char* SV_GetGuid(unsigned int clnum);

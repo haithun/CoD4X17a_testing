@@ -48,7 +48,6 @@ int _BUILD_NUMBER[1] = {
 #include "cmds.h"
 
 #include "q_platform.h"
-#include "cvar.h"
 #include "sys_local.h"
 #include "filesystem.h"
 #include "g_hud.h"
@@ -112,8 +111,10 @@ int _BUILD_NUMBER[1] = {
 #include "plugin_handler.c"
 
 #include "sys_con_tty.c"
+#include "sys_patch.c"
 #include "sys_main.c"
 #include "sys_net.c"
+#include "sys_unix.c"
 #include "mac_authorize.c"
 
 

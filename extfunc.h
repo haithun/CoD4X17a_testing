@@ -11,9 +11,6 @@ tCom_InitParse Com_InitParse = (tCom_InitParse)(0x81a7a78);
 typedef jmp_buf* (__cdecl *tSys_GetValue)( int );
 tSys_GetValue Sys_GetValue = (tSys_GetValue)(0x8140e9c);
 
-typedef void (__cdecl *tSys_Error_real)( const char *error);
-tSys_Error_real Sys_Error_real = (tSys_Error_real)(0x81d5a14);
-
 typedef qboolean (__cdecl *tPbServerInitialize)(void);
 tPbServerInitialize PbServerInitialize = (tPbServerInitialize)(0x810ecde);
 
@@ -378,8 +375,8 @@ tSV_UnlinkEntity SV_UnlinkEntity = (tSV_UnlinkEntity)(0x817d5e0);
 typedef const char* (__cdecl *tClientConnect)(int clnum, short clscriptid);  //Something simular to VM_Call
 tClientConnect ClientConnect = (tClientConnect)(0x80a83d4);
 
-typedef void (__cdecl *tG_Say)(gentity_t *ent, gentity_t *other, int mode, const char *message);
-tG_Say G_Say = (tG_Say)(0x80ae962);
+typedef void (__regparm3 *tG_SayTo)(gentity_t *ent, gentity_t *other, int mode, int color, const char* teamname, const char* name, const char *message);
+tG_SayTo G_SayTo = (tG_SayTo)(0x80ae6f4);
 /*
 typedef void (__cdecl *tCom_BeginRedirect)(char *buffer, int buffersize, void ( *flush )( char* ) );
 tCom_BeginRedirect Com_BeginRedirect = (tCom_BeginRedirect)(0x81218a0);

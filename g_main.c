@@ -38,6 +38,8 @@ or moved to a new level based on the "nextmap" cvar
 
 cvar_t *g_speed;
 cvar_t *g_disabledefcmdprefix;
+cvar_t *g_allowConsoleSay;
+
 
 DLL_PUBLIC __cdecl void ExitLevel( void ) {
 	int i;

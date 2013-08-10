@@ -734,48 +734,6 @@ __optimize3 __regparm2 void SV_ReceiveStats(netadr_t *from, msg_t* msg){
 	Com_DPrintf("SV_ReceiveStats: Received statspacket from disconnected remote client: %s qport: %d\n", NET_AdrToString(from), qport);
 }
 
-DLL_PUBLIC __cdecl void G_SayProcess(gentity_t *ent, gentity_t *other, int mode, char *message){	//Called by chat from Binary
-
-	const char* msg = message;
-	int clientnum = ent->s.number & 63;
-
-	if(message[0] == 0x15) msg++;
-
-//	InsertPluginEvent
-
-/*
-
-	if(cl->needPassword){
-		PlayerAuthByPassword(cl, ent, msg);
-		return;
-	}
-*/
-        if(msg[0] == '$' || (msg[0] == '!' && !g_disabledefcmdprefix->boolean)){	//Check for Command-Prefix
-	    msg++;
-	    SV_ExecuteRemoteCmd(clientnum, msg);
-	    return;
-        }
-
-	HL2Rcon_SourceRconSendChat(message, clientnum);
-
-	if(Scr_PlayerSay(ent, other, msg)){
-		return;
-	}
-
-	if(message[0] != 0x15){
-		if(!g_allowConsoleSay->boolean) return;
-	}else{
-		message++;
-	}
-
-	//	G_SayCensor(message);	// Now a plugin!
-	qboolean show = qtrue;
-	Plugin_Event(PLUGINS_ONMESSAGESENT, message, clientnum, &show);
-	if(show)
-	    G_Say(ent, other, mode, message);
-
-}
-
 
 /*
 =================
@@ -2435,4 +2393,13 @@ void QDECL SV_EnterLeaveLog( const char *fmt, ... ) {
 
 	}
 	Sys_LeaveCriticalSection(5);
+}
+
+
+const char* SV_GetGuid( unsigned int clnum)
+{
+	if(clnum > sv_maxclients->integer)
+		return "";
+
+	return svs.clients[clnum].pbguid;
 }

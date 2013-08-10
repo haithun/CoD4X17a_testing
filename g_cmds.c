@@ -383,3 +383,103 @@ DLL_PUBLIC __cdecl void StopFollowingOnDeath( gentity_t *ent ) {
 	StopFollowing(ent);
 }
 
+
+
+/*
+==================
+G_Say
+==================
+*/
+#define MAX_SAY_TEXT    150
+
+#define SAY_ALL     0
+#define SAY_TEAM    1
+#define SAY_TELL    2
+
+__cdecl void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText ) {
+	int j;
+	gentity_t   *other;
+	int color;
+	char name[64];
+	// don't let text be too long for malicious reasons
+	char text[MAX_SAY_TEXT];
+	char *teamname;
+
+	if(mode == 1)
+	{
+		if(ent->client->sess.sessionTeam == TEAM_RED || ent->client->sess.sessionTeam == TEAM_BLUE)
+			mode = SAY_TEAM;
+		else
+			mode = SAY_ALL;
+	}
+
+	Q_strncpyz(name, ent->client->sess.netname, sizeof(name));
+	Q_CleanStr( name );
+
+
+	switch ( mode )
+	{
+	default:
+	case SAY_ALL:
+		G_LogPrintf( "say;%s;%d;%s;%s\n", SV_GetGuid(ent->s.number), ent->s.number, name, chatText );
+		teamname = "";
+		color = COLOR_WHITE;
+		break;
+	case SAY_TEAM:
+		G_LogPrintf( "sayteam;%s;%d;%s;%s\n", SV_GetGuid(ent->s.number), ent->s.number, name, chatText );
+		if ( ent->client->sess.sessionTeam == TEAM_RED )
+		{
+			teamname = g_TeamName_Axis->string;
+		} else {
+			teamname = g_TeamName_Allies->string;
+		}
+		color = COLOR_CYAN;
+		break;
+	case SAY_TELL:
+		teamname = "";
+		color = COLOR_YELLOW;
+		break;
+	}
+
+	Q_strncpyz( text, chatText, sizeof( text ) );
+
+	char* textptr = text;
+
+	if(textptr[0] == 0x15) textptr++;
+
+        if(textptr[0] == '$' || (textptr[0] == '!' && !g_disabledefcmdprefix->boolean)){	//Check for Command-Prefix
+	    textptr++;
+	    SV_ExecuteRemoteCmd(ent->s.number, textptr);
+	    return;
+        }
+
+	HL2Rcon_SourceRconSendChat(text, ent->s.number);
+
+	if ( target ) {
+		G_SayTo( ent, target, mode, color, teamname, name, text);
+		return;
+	}
+
+	qboolean show = qtrue;
+	Plugin_Event(PLUGINS_ONMESSAGESENT, text, ent->s.number, &show);
+
+	if(!show)
+		return;
+
+	if(Scr_PlayerSay(ent, NULL, textptr))
+	{
+		return;
+	}
+
+	if(text[0] != 0x15 && !g_allowConsoleSay->boolean) 
+		return;
+
+	// echo the text to the console
+	Com_Printf( "Say %s: %s\n", name, text );
+
+	// send it to all the apropriate clients
+	for ( j = 0; j < level.maxclients; j++ ) {
+		other = &g_entities[j];
+		G_SayTo( ent, other, mode, color, teamname, name, text );
+	}
+}

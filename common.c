@@ -285,6 +285,25 @@ void QDECL Com_DPrintf( const char *fmt, ...) {
         Com_PrintMessage( 0, msg, MSG_DEFAULT);
 }
 
+
+void QDECL Com_DPrintfWrapper( int drop, const char *fmt, ...) {
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+		
+	if ( !com_developer || !com_developer->integer ) {
+		return;			// don't confuse non-developers with techie stuff...
+	}
+	
+	msg[0] = '^';
+	msg[1] = '2';
+
+	va_start (argptr,fmt);	
+	Q_vsnprintf (&msg[2], (sizeof(msg)-3), fmt, argptr);
+	va_end (argptr);
+
+        Com_PrintMessage( 0, msg, MSG_DEFAULT);
+}
+
 /*
 ================
 Com_DPrintNoRedirect
@@ -606,6 +625,16 @@ int QDECL Com_AddTimedEvent( int delay, void *function, unsigned int argcount, .
 	timedEventHead++;
 	return index;
 }
+
+
+
+void Com_InitEventQueue()
+{
+    // bk000306 - clear eventqueue
+    memset( eventQueue, 0, MAX_QUEUED_EVENTS * sizeof( sysEvent_t ) );
+}
+
+
 
 
 /*
@@ -1094,6 +1123,8 @@ void Com_Init(char* commandLine){
     Cbuf_Init();
 
     Cmd_Init();
+
+    Com_InitEventQueue();
 
     Com_ParseCommandLine(commandLine);
 

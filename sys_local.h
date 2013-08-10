@@ -20,6 +20,9 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#define COD4_DLL "cod4_lnxded.so"
+#define COD4_BINNAME "cod4_lnxded"
+
 // Input subsystem
 void IN_Init( void );
 void IN_Frame( void );
@@ -53,3 +56,11 @@ int    NET_TcpGetData( int *sock, void* data, const int maxsize );
 int    NET_TcpConnect( const char* string );
 void    NET_TcpCloseConnection( int *sock );
 void    Sys_DoStartProcess( char *cmdline );
+
+
+qboolean Sys_RandomBytes( byte *string, int len );
+void Sys_PlatformInit( void );
+char *Sys_Cwd( void );
+void Sys_LoadImage();
+void Sys_InitCrashDumps();
+const char* Sys_DefaultHomePath();

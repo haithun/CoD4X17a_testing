@@ -1833,3 +1833,5 @@ static const char *g_he_vertalign[] =
 
 */
 
+extern cvar_t *g_allowConsoleSay;
+extern cvar_t *g_disabledefcmdprefix;

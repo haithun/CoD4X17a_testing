@@ -65,7 +65,6 @@ cvar_t	*g_friendlyPlayerCanBlock;
 cvar_t	*g_FFAPlayerCanBlock;
 cvar_t	*sv_autodemorecord;
 cvar_t	*sv_demoCompletedCmd;
-cvar_t	*g_allowConsoleSay;
 cvar_t	*sv_streamServer[MAX_STREAM_SERVERS];
 netadr_t sv_streamServerAddr[MAX_STREAM_SERVERS];
 
