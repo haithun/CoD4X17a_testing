@@ -428,8 +428,6 @@ DLL_PUBLIC __cdecl int main(int argc, char* argv[]){
 
     int i;
     char commandLine[MAX_STRING_CHARS] = { 0 };
-    char homepath[MAX_OSPATH] = { 0 };
-    char basepath[MAX_OSPATH] = { 0 };
 
     // go back to real user for config loads
     seteuid(getuid());
@@ -440,34 +438,7 @@ DLL_PUBLIC __cdecl int main(int argc, char* argv[]){
 
     Sys_SetDefaultInstallPath( DEFAULT_BASEDIR );
 
-    //Find the fs_homepath / fs_basepath
-    for( i = 1; i < argc; i++ )
-    {
-        if(!Q_stricmp(argv[ i ], "fs_basepath"))
-        {
-            i++;
-            if(i < argc && argv[ i ])
-            {
-                Q_strncpyz(basepath, argv[ i ], sizeof(basepath));
-            }
-            continue;
-        }
-        if(!Q_stricmp(argv[ i ], "fs_homepath"))
-        {
-            i++;
-            if(i < argc && argv[ i ])
-            {
-                Q_strncpyz(homepath, argv[ i ], sizeof(homepath));
-            }
-        }
-    }
-
-    if(!homepath[0])
-    {
-        Q_strncpyz(homepath ,Sys_DefaultHomePath(), sizeof(homepath));
-    }
-
-    Sys_LoadImage( basepath, homepath );
+    Sys_LoadImage( );
 
     Sys_TimerInit( );
 

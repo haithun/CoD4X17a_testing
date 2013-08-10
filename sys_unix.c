@@ -128,92 +128,138 @@ char *Sys_Cwd( void )
 #define ELF_TYPEOFFSET 16
 #define DLLMOD_FILESIZE 2281820
 
-qboolean Sys_LoadImagePrepareFile(const char* p1, const char* p2, const char* p3, char* module)
+qboolean Sys_LoadImagePrepareFile(const char* path)
 {
-    FILE* fp;
-    int i, rval;
-    char cmdline[MAX_OSPATH];
+        FILE* fp;
+        int rval, trys;
+        char cmdline[MAX_OSPATH];
+        char copypath[MAX_OSPATH];
+        const char* dir;
 
-    for(i = 0; i < 6; i++)
-    {
-        switch(i)
+        if(path == NULL)
+            return qfalse;
+
+        //Get directory name
+        Q_strncpyz(copypath, path, sizeof(copypath)); //Copy 1st because the behaviour of dirname()is undefined
+        dir = Sys_Dirname( copypath );
+
+        //Test directory permissions:
+        if(access(dir, F_OK) != 0)
         {
-            case 0:
-            case 3:
-                if(p1[0] == 0)
-                    continue;
-
-                sprintf(module, "%s/%s", p1, COD4_DLL);
-                break;
-            case 1:
-            case 4:
-
-                if(p2[0] == 0)
-                    continue;
-
-                sprintf(module, "%s/%s", p2, COD4_DLL);
-                break;
-
-            default:
-
-                if(p3[0] == 0)
-                    continue;
-
-                sprintf(module, "%s/%s", p3, COD4_DLL);
+            printf("Error directory %s seems not to exist: %s\n", dir, strerror(errno));
+            return qfalse;
         }
 
-        if(i > 2)
+        if(access(dir, R_OK) != 0)
         {
-            Com_sprintf(cmdline, sizeof(cmdline), "wget -O %s %s", module, "http://iceops.in/cod4/cod4_lnxded.so");
+            printf("Read access to directory %s is denied: %s\n", dir, strerror(errno));
+            return qfalse;
+        }
+
+        if(access(dir, W_OK) != 0)
+        {
+            printf("Write access to directory %s is denied: %s\n", dir, strerror(errno));
+            return qfalse;
+        }
+
+        trys = 0;
+
+        if(access(path, F_OK) != 0)
+        {
+            printf("The file %s seems not to exist\n", path);
+
+        dl_again:
+            printf("Trying to download...\n");
+
+            Com_sprintf(cmdline, sizeof(cmdline), "wget -O %s %s", path, "http://update.iceops.in/cod4_lnxded.so");
             rval = system( cmdline );
-            if(rval == -1)
+            if(rval != 0)
+            {
+                printf("Failed to download cod4_lnxded.so\nPlease make sure you are connected to the internet or install this file manually: %s\n", path);
+                return qfalse;
+            }
+
+            if(access(path, F_OK) != 0)
+            {
+                printf("Failed to install cod4_lnxded.so\nPlease try to install this file manually: %s\n", path);
                 return qfalse;
 
-            if(rval == 0)
-            {
-                i = -1;
             }
-            continue;
-
         }
+
+        if(access(path, R_OK) != 0)
+        {
+            printf("Read access to file %s is denied: %s\n", path, strerror(errno));
+            return qfalse;
+        }
+
+        if(access(path, W_OK) != 0)
+        {
+            printf("Write access to file %s is denied: %s\n", path, strerror(errno));
+            return qfalse;
+        }
+
         //Test if it is the correct file and see if it is already a shared object
-        fp = fopen(module, "rb");
+        fp = fopen(path, "rb");
         if(fp)
         {
             if( !fseek(fp, 0, SEEK_END) && ftell(fp) == DLLMOD_FILESIZE && !fseek(fp, ELF_TYPEOFFSET, SEEK_SET))
             {
                 if(fgetc(fp) == 3)
-                {
+                { //The elf type is shared library already
                     fclose(fp);
                     return qtrue;
                 }
-
+                //The elf type is exe file - we have to make it a shared library
                 fclose(fp);
 
             }else{
+                //The file can not be read or the size is wrong
                 fclose(fp);
-                continue;
+                printf("The file %s can not be read or has a wrong size.\n", path);
+                if(trys < 1)
+                {
+                    printf("Deleting file: %s\n", path);
+                    if(remove(path) != 0)
+                    {
+                        printf("Couldn't delete file %s Error: %s\n", path, strerror(errno));
+                        return qfalse;
+                    }
+                    trys++;
+                    goto dl_again;
+                }
+                return qfalse;
             }
+
+        }else{
+            printf("Failed to open file %s for reading - Error: %s\n", path, strerror(errno));
+            return qfalse;
         }
+
         //Try to make it a shared object
-        fp = fopen(module, "rb+");
+        fp = fopen(path, "rb+");
         if(fp)
         {
-            if(fseek(fp, ELF_TYPEOFFSET, SEEK_SET))
+            if(fseek(fp, ELF_TYPEOFFSET, SEEK_SET) != 0)
             {
+                printf("Seek error on file %s opened for writing - Error: %s\n", path, strerror(errno));
                 fclose(fp);
-                continue;
+                return qfalse;
             }
+
             if(fputc(3, fp) == 3)
             {
                 fclose(fp);
                 return qtrue;
             }
+
+            printf("Failed to write to file %s - Error: %s\n", path, strerror(errno));
             fclose(fp);
+            return qfalse;
         }
 
-    }
-    return qfalse;
+        printf("Failed to open file %s for writing - Error: %s\n", path, strerror(errno));
+        return qfalse;
 
 }
 
@@ -226,14 +272,19 @@ Sys_LoadImage
 
 =============
 */
-void Sys_LoadImage( const char* basepath, const char* homepath){
+void Sys_LoadImage( ){
 
     void *dl;
     char *error;
     char module[MAX_OSPATH];
 
+    Com_sprintf(module, sizeof(module), "%s/%s", Sys_BinaryPath(), COD4_DLL);
 
-    Sys_LoadImagePrepareFile(Sys_BinaryPath(), basepath, homepath, module);
+    if(!Sys_LoadImagePrepareFile( module ))
+    {
+        printf("An error has occurred. Exiting...\n");
+        _exit(1);
+    }
 
     dl = dlopen(module, RTLD_LAZY);
 
@@ -241,13 +292,12 @@ void Sys_LoadImage( const char* basepath, const char* homepath){
     {
         error = dlerror();
         printf("Failed to load required module: %s Error: %s\n", module, error);
-
         _exit(1);
 
     }
     printf("Loaded module: %s\n", module);
 
-    /* No retrieving of symbols where non are :( */
+    /* No retrieving of symbols where none are :( */
 
     if(!Sys_PatchImage())
     {
