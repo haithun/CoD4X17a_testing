@@ -295,8 +295,6 @@ void Sys_LoadImage( ){
         _exit(1);
 
     }
-    printf("Loaded module: %s\n", module);
-
     /* No retrieving of symbols where none are :( */
 
     if(!Sys_PatchImage())

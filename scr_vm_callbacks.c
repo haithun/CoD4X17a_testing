@@ -1,7 +1,7 @@
 //Only CoD4 gamescript callback functions here
 
 
-qboolean Scr_PlayerSay(gentity_t* from, gentity_t* to, const char* text){
+qboolean Scr_PlayerSay(gentity_t* from, int mode, const char* text){
 
     int callback;
     int threadId;
@@ -20,7 +20,10 @@ qboolean Scr_PlayerSay(gentity_t* from, gentity_t* to, const char* text){
     }else{
         Scr_AddString(text);
     }
-    Scr_AddEntity(to);
+    if(mode == 0)
+        Scr_AddBool( qfalse );
+    else
+        Scr_AddBool( qtrue );
 
     threadId = Scr_ExecEntThread(from, callback, 1);
 

@@ -16,24 +16,13 @@ New Script_Callbacks
 
 
 ============================
-"CodeCallback_PlayerSayCmd(string <text>, ent <entity>)" Getting called after a player types into chat with one of these characters as 1st character: % . / &
+"CodeCallback_PlayerSayCmd(string <text>, bool <teamchat>)" Getting called after a player types into chat with one of these characters as 1st character: % . / &
 			    Chat will not be displayed on screen. Instead this callback function getting called.
 
-"CodeCallback_PlayerSayAll(string <text>, ent <entity>)" Getting called after a player types into chat anything
+"CodeCallback_PlayerSayAll(string <text>, bool <teamchat>)" Getting called after a player types into chat anything
 Both functions will put at 1st argument the text from player. The player entity will be available too with the "self" prefix
-The 2nd argument will be the destination entity for the chat
+The 2nd argument will be either true = teamchat or false = chat to all
 This two functions can not be used together. You can only use one of them.
-
-
-"CodeCallback_GotSequencedMessage(string <command>)" Getting called on response from script connected masterserver.
-The command will be passed as 1st argument. This callback-function has to be present to use the connectServer() function
-
-
-"CodeCallback_GotSequencedPlayerMessage(string <command>)" Getting called on response from script connected masterserver.
-The command will be passed as 1st argument. The player entity will be available too with the "self" prefix.
-This callback-function has to be present to use the connectServer() function
-
-
 
 ============================
 
@@ -324,132 +313,6 @@ Usage: removeAllTestClients()
 RemoveTestClient
 ============================
 Usage: entity = removeTestClient()
-
-
-
-
-
-
-
-
-
-
-==========================================
-
-Network related functions
-
-==========================================
-
-
-ConnectServer
-============================
-Usage: bool = connectServer(string <address:port>, string <connectkey>)
-
-This function is for sequenced connections only.
-It is used to connect to a server.
-Address is either a domain name or any ipv4 or ipv6 address.
-Connectkey is either just "" or a string of this format:
-xxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxx
-1st 4 characters are an index the other 28 characters are the real key
-The 1st 12 characters of the real key are only used for challenge and connect requests
-The other 16 characters are used for encrypting the established connection - Currently very weak encryption
-
-The index is used on the other other end for faster lookup speed inside a table.
-if the key is just "" the following key will be used: 0000-0000000000000000000000000000
-
-On sucessfull resolving of the given address this function will return true - but that doesn't mean the connection is sucessfull
-
-
-DisconnectServer
-============================
-Usage: void = disconnectServer()
-
-
-GetConnStatus
-============================
-Usage: int = getConnStatus()
-This function just retrieves the state of the connection
-0 = disconnected
-1 = challengeing
-2 = connecting
-3 = connected
-
-
-TransmitBuffer
-============================
-Usage: void = self transmitBuffer(string <command>)
-
-This functions sends out the content of the sendDate buffer to the connected server.
-It is required that you have build the sendData buffer prior by using one of these two functions:
-SetValueForKey() or SetTransmitBuffer()
-If you have not build the sendData buffer you will send an empty message which contains only the values:
-command; uid; guid; player's challenge
-
-This function will always pass the informations: uid and guid
-There is one argument. Command is a string so the server can know what kind of information you send him.
-Command is a string so the server can know what you send him.
-Ticket is a value that should be always present in the return message from the connected server.
-It is used to recognize the player on server so the script can know for which player the message got sent.
-
-If we get any response this will call:
-maps/mp/gametypes/_callbacksetup::CodeCallback_GotSequencedPlayerMessage
-
-
-TransmitBuffer
-============================
-Usage: void = TransmitBuffer(string <command>)
-
-This functions sends out the content of the sendDate buffer to the connected server.
-It is required that you have build the sendData buffer prior by using one of these two functions:
-SetValueForKey() or SetTransmitBuffer()
-If you have not build the sendData buffer you will send an empty message which contains only the value:
- command
-
-There is one argument. Command is a string so the server can know what kind of information you send him.
-
-If we get any response this will call:
-maps/mp/gametypes/_callbacksetup::CodeCallback_GotSequencedMessage
-
-
-
-
-
-
-SetValueForKey
-============================
-This functions sets a new key and a tied value on the network transmit buffer
-
-Usage: void = setValueForKey(string <key>, string <value>)
-
-
-GetValueForKey
-============================
-This functions retrieves the value for the given key from the current network receive buffer
-
-Usage: string = getValueForKey(string <key>)
-
-
-SetTransmitBuffer
-============================
-Usage: void = setTransmitBuffer(string <value>)
-
-This functions overwrites the network transmit buffer with the given value
-
-WARNING: This function conflict with the functions:
-self SeqTransmitBuffer()
-self TransmitBuffer()
-SetValueForKey()
-
-Never use this functions together!
-
-
-
-
-getReceiveBuffer
-============================
-This functions retrieves the current value of the network receive buffer
-Usage: string = getReceiveBuffer()
-
 
 
 

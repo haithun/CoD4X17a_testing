@@ -1,13 +1,11 @@
 //typedef int32_t DWORD;
 
-
 #include "sys_patch.h"
 
 void Sys_RetriveData(){
 
-
-#define startADR 0x817b541
-#define endADR 0x817b56b
+    #define startADR 0x817b541
+    #define endADR 0x817b56b
 
     FILE * fdout;
     byte* adr;

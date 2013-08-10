@@ -438,7 +438,7 @@ tScr_ConstructMessageString Scr_ConstructMessageString = (tScr_ConstructMessageS
 typedef int (__cdecl *tG_LocalizedStringIndex)( const char* );
 tG_LocalizedStringIndex G_LocalizedStringIndex = (tG_LocalizedStringIndex)(0x80cb218);
 
-qboolean Scr_PlayerSay(gentity_t*, gentity_t*, const char* text);
+qboolean Scr_PlayerSay(gentity_t*, int team, const char* text);
 
 void GScr_LoadGameTypeScript(void);
 

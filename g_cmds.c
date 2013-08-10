@@ -466,7 +466,7 @@ __cdecl void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *cha
 	if(!show)
 		return;
 
-	if(Scr_PlayerSay(ent, NULL, textptr))
+	if(Scr_PlayerSay(ent, mode, textptr))
 	{
 		return;
 	}
