@@ -17,7 +17,7 @@ gcc -m32 -Wall -O1 -g -fno-omit-frame-pointer -mtune=prescott -c *.c
 #gcc -m32 -Wall -O1 -fvisibility=hidden -fno-omit-frame-pointer -march=amdfam10 -c cod4_extfunc.c
 
 #gcc -m32 -s -shared -fvisibility=hidden -Wl,-soname,cod4x17a.so -o cod4x17a.so *.o
-nasm -f elf common_hooks.asm
+nasm -f elf qcommon_hooks.asm
 nasm -f elf cmd_hooks.asm
 nasm -f elf cvar_hooks.asm
 nasm -f elf filesystem_hooks.asm

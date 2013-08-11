@@ -1,5 +1,5 @@
-#ifndef __COMMON_MEM_H__
-#define __COMMON_MEM_H__
+#ifndef __QCOMMON_MEM_H__
+#define __QCOMMON_MEM_H__
 
 #include <stdlib.h>
 

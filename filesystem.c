@@ -195,7 +195,7 @@ or configs will never get loaded from disk!
 #include <stdlib.h>
 #include <stdarg.h>
 #include "filesystem.h"
-#include "common_io.h"
+#include "qcommon_io.h"
 #include "cvar.h"
 
 #include <sys/stat.h>

@@ -1,7 +1,7 @@
 #include <string.h>
 #include "q_shared.h"
 #include "cmd_completion.h"
-#include "common_io.h"
+#include "qcommon_io.h"
 
 /*
 ===========================================

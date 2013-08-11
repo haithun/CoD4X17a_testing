@@ -1,5 +1,5 @@
-#ifndef __COMMON_STDIO_H__
-#define __COMMON_STDIO_H__
+#ifndef __QCOMMON_STDIO_H__
+#define __QCOMMON_STDIO_H__
 
 #include "q_shared.h"
 

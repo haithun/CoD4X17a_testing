@@ -1,8 +1,8 @@
 #include <string.h>
 
 #include "cmd.h"
-#include "common_io.h"
-#include "common_mem.h"
+#include "qcommon_io.h"
+#include "qcommon_mem.h"
 
 
 

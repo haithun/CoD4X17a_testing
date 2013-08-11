@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <stdarg.h>
 #include <string.h>
 #include "q_shared.h"
-#include "common_io.h"
+#include "qcommon_io.h"
 
 
 short   ShortSwap (short l)
@@ -135,13 +135,14 @@ qboolean Q_isprintstring( char* s ){
 This part makes qshared.c undepended in case no proper qcommon.h is included
 */
 
-#ifndef __COMMON_STDIO_H__
+#ifndef __QCOMMON_STDIO_H__
 
 #define Com_Printf printf
 #define Com_PrintWarning printf
 #define Com_DPrintf printf
 
 #define ERR_FATAL 0
+#define ERR_DROP 1
 void Com_Error(int err, char* fmt,...)
 {
 	char buf[MAX_STRING_CHARS];
