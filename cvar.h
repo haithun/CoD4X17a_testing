@@ -20,6 +20,11 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
+#ifndef __CVAR_H__
+#define __CVAR_H__
+
+#include "q_math.h"
+#include "q_shared.h"
 
 // nothing outside the Cvar_*() functions should modify these fields!
 
@@ -76,97 +81,36 @@ typedef struct{
 
 
 //Defines Cvarrelated functions inside executable file
-typedef cvar_t* (__cdecl *tCvar_RegisterString)(const char *var_name, const char *var_value, int flags, const char *var_description);
-tCvar_RegisterString Cvar_RegisterString = (tCvar_RegisterString)(0x81a2944);
-
-typedef cvar_t* (__cdecl *tCvar_RegisterBool)(const char *var_name, qboolean var_value, int flags, const char *var_description);
-tCvar_RegisterBool Cvar_RegisterBool = (tCvar_RegisterBool)(0x81a2d94);
-
-typedef cvar_t* (__cdecl *tCvar_RegisterInt)(const char *var_name, int var_value, int min_value, int max_value, int flags, const char *var_description);
-tCvar_RegisterInt Cvar_RegisterInt = (tCvar_RegisterInt)(0x81a2cc6);
-
-typedef cvar_t* (__cdecl *tCvar_RegisterEnum)(const char *var_name, char** valnames, int defaultval, int flags, const char *var_description);
-tCvar_RegisterEnum Cvar_RegisterEnum = (tCvar_RegisterEnum)(0x81a2860);
-
-typedef cvar_t* (__cdecl *tCvar_RegisterFloat)(const char *var_name, float var_value, float min_value, float max_value, int flags, const char *var_description);
-tCvar_RegisterFloat Cvar_RegisterFloat = (tCvar_RegisterFloat)(0x81a2e6c);
-
-typedef void (__cdecl *tCvar_SetInt)(cvar_t const* var, int val);
-tCvar_SetInt Cvar_SetInt = (tCvar_SetInt)(0x81a20c4);
-
-typedef void (__cdecl *tCvar_SetBool)(cvar_t const* var, qboolean val);
-tCvar_SetBool Cvar_SetBool = (tCvar_SetBool)(0x81a1c6c);
-
-typedef void (__cdecl *tCvar_SetString)(cvar_t const* var, char const* string);
-tCvar_SetString Cvar_SetString = (tCvar_SetString)(0x81a14fa);
-
-typedef void (__cdecl *tCvar_SetFloat)(cvar_t const* var, float val);
-tCvar_SetFloat Cvar_SetFloat = (tCvar_SetFloat)(0x81a1fe0);
-
-typedef void (__cdecl *tCvar_Set_f)(void);
-tCvar_Set_f Cvar_Set_f = (tCvar_Set_f)(0x8127a80);
-
-typedef void (__cdecl *tCvar_SetS_f)(void);
-tCvar_SetS_f Cvar_SetS_f = (tCvar_SetS_f)(0x8127ce8);
-
-typedef void (__cdecl *tCvar_Toggle_f)(void);
-tCvar_Toggle_f Cvar_Toggle_f = (tCvar_Toggle_f)(0x8126f5c);
-
-typedef void (__cdecl *tCvar_TogglePrint_f)(void);
-tCvar_TogglePrint_f Cvar_TogglePrint_f = (tCvar_TogglePrint_f)(0x8126f66);
-
-typedef void (__cdecl *tCvar_SetA_f)(void);
-tCvar_SetA_f Cvar_SetA_f = (tCvar_SetA_f)(0x8127c7c);
-
-typedef void (__cdecl *tCvar_SetFromCvar_f)(void);
-tCvar_SetFromCvar_f Cvar_SetFromCvar_f = (tCvar_SetFromCvar_f)(0x812746a);
-
-typedef void (__cdecl *tCvar_SetFromLocalizedStr_f)(void);
-tCvar_SetFromLocalizedStr_f Cvar_SetFromLocalizedStr_f = (tCvar_SetFromLocalizedStr_f)(0x8127842);
-
-typedef void (__cdecl *tCvar_SetToTime_f)(void);
-tCvar_SetToTime_f Cvar_SetToTime_f = (tCvar_SetToTime_f)(0x81273aa);
-
-typedef void (__cdecl *tCvar_Reset_f)(void);
-tCvar_Reset_f Cvar_Reset_f = (tCvar_Reset_f)(0x8127356);
-
-typedef void (__cdecl *tCvar_List_f)(void);
-tCvar_List_f Cvar_List_f = (tCvar_List_f)(0x8127306);
-
-typedef void (__cdecl *tCvar_Dump_f)(void);
-tCvar_Dump_f Cvar_Dump_f = (tCvar_Dump_f)(0x81272d2);
-
-typedef void (__cdecl *tCvar_RegisterBool_f)(void);
-tCvar_RegisterBool_f Cvar_RegisterBool_f = (tCvar_RegisterBool_f)(0x8126fc6);
-
-typedef void (__cdecl *tCvar_RegisterInt_f)(void);
-tCvar_RegisterInt_f Cvar_RegisterInt_f = (tCvar_RegisterInt_f)(0x81276aa);
-
-typedef void (__cdecl *tCvar_RegisterFloat_f)(void);
-tCvar_RegisterFloat_f Cvar_RegisterFloat_f = (tCvar_RegisterFloat_f)(0x812751a);
-
-typedef void (__cdecl *tCvar_SetU_f)(void);
-tCvar_SetU_f Cvar_SetU_f = (tCvar_SetU_f)(0x8127d54);
-
-typedef int (__cdecl *tg_cvar_valueforkey)(char* key);
-tg_cvar_valueforkey g_cvar_valueforkey = (tg_cvar_valueforkey)(0x819e90a);
-
-typedef char* (__cdecl *tCvar_InfoString)(int unk, int bit);
-tCvar_InfoString Cvar_InfoString = (tCvar_InfoString)(0x81264f4);
-
-typedef void (__cdecl *tCvar_ForEach)(void (*callback)(cvar_t const*, void* passedhere), void* passback);
-tCvar_ForEach Cvar_ForEach = (tCvar_ForEach)(0x819f328);
-
-typedef char* (__cdecl *tCvar_DisplayableValue)(cvar_t const*);
-tCvar_DisplayableValue Cvar_DisplayableValue = (tCvar_DisplayableValue)(0x819e2ac);
-
-typedef char* (__cdecl *tCvar_GetVariantString)(const char* name);
-tCvar_GetVariantString Cvar_GetVariantString = (tCvar_GetVariantString)(0x819e8cc);
-
-typedef cvar_t* (__regparm1 *tCvar_FindMalleableVar)(const char* name);
-tCvar_FindMalleableVar Cvar_FindMalleableVar = (tCvar_FindMalleableVar)(0x819e6d0);
-
-
+ cvar_t* __cdecl Cvar_RegisterString(const char *var_name, const char *var_value, int flags, const char *var_description);
+ cvar_t* __cdecl Cvar_RegisterBool(const char *var_name, qboolean var_value, int flags, const char *var_description);
+ cvar_t* __cdecl Cvar_RegisterInt(const char *var_name, int var_value, int min_value, int max_value, int flags, const char *var_description);
+ cvar_t* __cdecl Cvar_RegisterEnum(const char *var_name, char** valnames, int defaultval, int flags, const char *var_description);
+ cvar_t* __cdecl Cvar_RegisterFloat(const char *var_name, float var_value, float min_value, float max_value, int flags, const char *var_description);
+ void __cdecl Cvar_SetInt(cvar_t const* var, int val);
+ void __cdecl Cvar_SetBool(cvar_t const* var, qboolean val);
+ void __cdecl Cvar_SetString(cvar_t const* var, char const* string);
+ void __cdecl Cvar_SetFloat(cvar_t const* var, float val);
+ void __cdecl Cvar_Set_f(void);
+ void __cdecl Cvar_SetS_f(void);
+ void __cdecl Cvar_Toggle_f(void);
+ void __cdecl Cvar_TogglePrint_f(void);
+ void __cdecl Cvar_SetA_f(void);
+ void __cdecl Cvar_SetFromCvar_f(void);
+ void __cdecl Cvar_SetFromLocalizedStr_f(void);
+ void __cdecl Cvar_SetToTime_f(void);
+ void __cdecl Cvar_Reset_f(void);
+ void __cdecl Cvar_List_f(void);
+ void __cdecl Cvar_Dump_f(void);
+ void __cdecl Cvar_RegisterBool_f(void);
+ void __cdecl Cvar_RegisterInt_f(void);
+ void __cdecl Cvar_RegisterFloat_f(void);
+ void __cdecl Cvar_SetU_f(void);
+ int __cdecl g_cvar_valueforkey(char* key);
+ char* __cdecl Cvar_InfoString(int unk, int bit);
+ void __cdecl Cvar_ForEach(void (*callback)(cvar_t const*, void* passedhere), void* passback);
+ char* __cdecl Cvar_DisplayableValue(cvar_t const*);
+ char* __cdecl Cvar_GetVariantString(const char* name);
+ cvar_t* __regparm1 Cvar_FindMalleableVar(const char* name);
 
 //defines Cvarflags
 #define	CVAR_ARCHIVE		1	// set to cause it to be saved to vars.rc
@@ -205,10 +149,6 @@ tCvar_FindMalleableVar Cvar_FindMalleableVar = (tCvar_FindMalleableVar)(0x819e6d
 #define g_gametype getcvaradr(0x13ed89bc)
 #define sv_pure getcvaradr(0x13ed89d0)
 #define sv_fps getcvaradr(0x13ed8950)
-#define fs_game getcvaradr(0x13f9da18)
-#define fs_debug getcvaradr(0x13f9da00)
-#define fs_basepath getcvaradr(0x13f9da08)
-#define fs_homepath getcvaradr(0x13f9da04)
 #define com_developer getcvaradr(0x88a6184)
 #define useFastfiles getcvaradr(0x88a6170)
 #define com_logfile getcvaradr(0x88a61b0)
@@ -227,10 +167,24 @@ tCvar_FindMalleableVar Cvar_FindMalleableVar = (tCvar_FindMalleableVar)(0x819e6d
 #define sv_serverid getcvaradr(0x13ed8978)
 #define sv_floodProtect getcvaradr(0x13ed89e4)
 
+#endif
 
-//Local Cvars defined for DLL only
-static cvar_t		*net_enabled;
-cvar_t		*net_port;
-cvar_t		*net_port6;
-cvar_t		*net_ip;
-cvar_t		*net_ip6;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -20,13 +20,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include "q_shared.h"
-#include "common_io.h"
-
-
 short   ShortSwap (short l)
 {
 	byte    b1,b2;
@@ -131,32 +124,9 @@ qboolean Q_isprintstring( char* s ){
     return 1;
 }
 
-/*
-This part makes qshared.c undepended in case no proper qcommon.h is included
-*/
 
-#ifndef __COMMON_STDIO_H__
 
-#define Com_Printf printf
-#define Com_PrintWarning printf
-#define Com_DPrintf printf
 
-#define ERR_FATAL 0
-void Com_Error(int err, char* fmt,...)
-{
-	char buf[MAX_STRING_CHARS];
-
-	va_list		argptr;
-
-	va_start (argptr,fmt);
-	Q_vsnprintf(buf, sizeof(buf), fmt, argptr);
-	va_end (argptr);
-
-	fputs(buf, stdout);
-	exit(1);
-}
-
-#endif
 
 
 #ifdef _MSC_VER
@@ -563,8 +533,6 @@ void Com_TruncateLongString( char *buffer, const char *s )
 
 
 
-
-
 /*
 =====================================================================
 
@@ -887,6 +855,159 @@ void BigInfo_SetValueForKey( char *s, const char *key, const char *value ) {
 
 
 
+/*
+============
+SV_Cmd_Argc	Returns count of commandline arguments
+============
+*/
+int	SV_Cmd_Argc( void ) {
+
+	int	cmd_argc;
+
+	__asm__ (
+	"mov	0x8879a40,%%eax			\n\t"
+	"mov	0x8879a84(,%%eax,4), %%eax	\n\t"
+	:"=a" (cmd_argc));
+
+	return cmd_argc;
+}
+
+/*
+============
+Cmd_Argc	Returns count of commandline arguments
+============
+*/
+int	Cmd_Argc( void ) {
+
+	int	cmd_argc;
+
+	__asm__ (
+	"mov	0x88799a0,%%eax			\n\t"
+	"mov	0x88799e4(,%%eax,4), %%eax	\n\t"
+	:"=a" (cmd_argc));
+	return cmd_argc;
+}
+
+
+/*
+============
+SV_Cmd_Argv	Returns commandline argument by number
+============
+*/
+
+char	*SV_Cmd_Argv( int arg ) {
+
+	char* cmd_argv;
+
+	__asm__ (
+	"mov	0x8879a40,%%eax			\n\t"
+	"mov    $0x822be98,%%edx		\n\t"
+	"cmpl   %%ecx,0x8879a84(,%%eax,4)	\n\t"
+	"jle	1f				\n\t"
+	"mov    0x8879aa4(,%%eax,4),%%eax	\n\t"
+	"lea	(%%eax,%%ecx,4),%%edx		\n\t"
+	"mov    0x4(%%eax),%%edx		\n\t"
+	"lea	(%%eax,%%ecx,4),%%edx		\n\t"
+	"mov	(%%edx),%%edx			\n\t"
+	"1:					\n\t"
+	"					\n\t"
+	:"=d" (cmd_argv)
+	:"c" (arg)
+	:"eax"					);
+	return (cmd_argv);
+}
+
+/*
+============
+SV_Cmd_ArgvBuffer
+
+The interpreted versions use this because
+they can't have pointers returned to them
+============
+*/
+void	SV_Cmd_ArgvBuffer( int arg, char *buffer, int bufferLength ) {
+	Q_strncpyz( buffer, SV_Cmd_Argv(arg), bufferLength );
+}
+
+
+/*
+============
+Cmd_Argv	Returns commandline argument by number
+============
+*/
+
+char	*Cmd_Argv( int arg ) {
+
+	char* cmd_argv;
+
+	__asm__ (
+	"mov	0x88799a0,%%eax			\n\t"
+	"mov    $0x00,%%edx			\n\t"
+	"cmpl   %%ecx,0x88799e4(,%%eax,4)	\n\t"
+	"jle	1f				\n\t"
+	"mov    0x8879a04(,%%eax,4),%%eax	\n\t" //?
+	"lea	(%%eax,%%ecx,4),%%edx		\n\t"
+	"mov	(%%edx),%%edx			\n\t"
+	"1:					\n\t"
+	"					\n\t"
+	:"=d" (cmd_argv)
+	:"c" (arg)
+	:"eax"					);
+	if(cmd_argv == NULL)
+	    return "";
+
+	else return (cmd_argv);
+}
+
+/*
+============
+Cmd_Args
+
+Returns a single string containing argv(1) to argv(argc()-1)
+============
+*/
+
+char	*Cmd_Args( char* buff, int bufsize ) {
+
+	int		i;
+	int		cmd_argc = Cmd_Argc();
+
+	buff[0] = 0;
+	for ( i = 1 ; i < cmd_argc ; i++ ) {
+		Q_strcat( buff, bufsize, Cmd_Argv(i) );
+		if ( i != cmd_argc-1 ) {
+			Q_strcat( buff, bufsize, " " );
+		}
+	}
+
+	return buff;
+}
+
+
+/*
+============
+Cmd_Argvs
+
+Returns a single string containing argv(int arg) to argv(argc()-arg)
+============
+*/
+
+char	*Cmd_Argsv( int arg, char* buff, int bufsize ) {
+
+	int		i;
+	int		cmd_argc = Cmd_Argc();
+	buff[0] = 0;
+	for ( i = arg ; i < cmd_argc ; i++ ) {
+		Q_strcat( buff, bufsize, Cmd_Argv(i) );
+		if ( i != cmd_argc-1 ) {
+			Q_strcat( buff, bufsize, " " );
+		}
+	}
+
+	return buff;
+}
+
+
 
 /*
 ===============
@@ -916,6 +1037,55 @@ char	*SV_ExpandNewlines( char *in ) {
 
 
 
+/*
+=================
+Search the memory given by buffer pointer for a set of patterns limited by memsize
+Special feature: Don't care characters
+=================
+*/
+//Pattern search function begin
+patternseek_t	patternseek(unsigned const char *patternarray, int sizeofarray, unsigned const char *buffer, unsigned int memsize)
+{
+    unsigned char c1, c2;
+    patternseek_t z;
+    unsigned const char *s1 = patternarray;
+    unsigned const char *s2 = buffer;
+    char dontcare=0x66;
+    int i;
+    int j;
+
+
+    if ( patternarray == NULL || buffer == NULL) {
+
+	z.end = NULL;
+	z.start = NULL;
+	return z;
+    }
+
+   for(i=0, j=0 ; j < memsize; i++, j++){
+
+        if(i >= sizeofarray){
+            z.start = (s2-i+1);
+            z.end = (s2+1);
+            return z;
+        }
+
+	c1 = *s1++;
+	c2 = *s2++;
+
+	if(c1 == dontcare){
+	    continue;
+	} else if (c1 != c2){
+	    s1 = patternarray;
+	    i=0;
+	    continue;
+	}
+   }//end for
+   z.end = NULL;
+   z.start = NULL;
+   return z;
+}
+//Pattern search end
 
 
 /*
@@ -1131,6 +1301,15 @@ void* stack_pop(void *array[], int size){
 
 =====================================================================
 */
+
+typedef struct{
+    int		parents;
+    qboolean	last;
+    void *stack[48];
+    char *buffer;
+    char *encoding;
+    size_t buffersize;
+}xml_t;
 
 /*
 ==================

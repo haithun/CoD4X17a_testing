@@ -20,8 +20,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-
+#include "cvar.h"
+#include "cmd.h"
+#include "cmd_completion.h"
 // nothing outside the Cvar_*() functions should modify these fields!
+
+#ifndef __CMD_COMPLETION_H__
+void Cvar_CompleteCvarName(){}
+#endif
 
 
 void Cvar_VariableStringBuffer(const char* cvarname, char* buff, size_t size){
@@ -111,4 +117,3 @@ const char* Cvar_VariableString( const char *var_name ) {
 		return "";
 	return var->string;
 }
-

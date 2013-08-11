@@ -190,6 +190,14 @@ or configs will never get loaded from disk!
 =============================================================================
 
 */
+
+#include <string.h>
+#include <stdlib.h>
+#include <stdarg.h>
+#include "filesystem.h"
+#include "common_io.h"
+#include "cvar.h"
+
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <errno.h>
@@ -206,10 +214,7 @@ tFS_WriteFile FS_WriteFile = (tFS_WriteFile)(0x818a58c);
 
 typedef void (__cdecl *tFS_FreeFile)(void *buffer);
 tFS_FreeFile FS_FreeFile = (tFS_FreeFile)(0x8187430);
-*/
-typedef void (__cdecl *tFS_CopyFile)(char* FromOSPath,char* ToOSPath);
-tFS_CopyFile FS_CopyFile = (tFS_CopyFile)(0x8189ec0);
-/*
+
 typedef void (__cdecl *tFS_SV_Rename)(const char* from,const char* to);
 tFS_SV_Rename FS_SV_Rename = (tFS_SV_Rename)(0x81287da);
 
@@ -218,35 +223,14 @@ tFS_Write FS_Write = (tFS_Write)(0x8186ec4);
 
 typedef int (__cdecl *tFS_Read)(void const* data,int length, fileHandle_t);
 tFS_Read FS_Read = (tFS_Read)(0x8186f64);
-*/
 
-//For opening files inside ZIP-Files
-typedef int (__cdecl *tFS_FOpenFileRead)(const char* filename,fileHandle_t* returnhandle);
-tFS_FOpenFileRead FS_FOpenFileRead = (tFS_FOpenFileRead)(0x818ba54);
-
-typedef fileHandle_t (__cdecl *tFS_FOpenFileWrite)(const char* filename);
-tFS_FOpenFileWrite FS_FOpenFileWrite = (tFS_FOpenFileWrite)(0x818a428);
-
-typedef fileHandle_t (__cdecl *tFS_FOpenFileAppend)(const char* filename);
-tFS_FOpenFileAppend FS_FOpenFileAppend = (tFS_FOpenFileAppend)(0x818a6cc);
-/*
 typedef int (__cdecl *tFS_HandleForFile)(fileHandle_t);
 tFS_HandleForFile FS_HandleForFile = (tFS_HandleForFile)(0x818690e);
 
 typedef int (__cdecl *tFS_FOpenFileByMode)(const char *qpath, fileHandle_t *f, fsMode_t mode);
-tFS_FOpenFileByMode FS_FOpenFileByMode = (tFS_FOpenFileByMode)(0x818ba98);*/
+tFS_FOpenFileByMode FS_FOpenFileByMode = (tFS_FOpenFileByMode)(0x818ba98);
+*/
 
-typedef unzFile (__cdecl *tunzOpen)(const char* path);
-tunzOpen unzOpen = (tunzOpen)(0x81d3a09);
-
-typedef int (__cdecl *tunzOpenCurrentFile)(unzFile file);
-tunzOpenCurrentFile unzOpenCurrentFile = (tunzOpenCurrentFile)(0x81d40fb);
-
-typedef int (__cdecl *tunzSetOffset)(unzFile file, unsigned long pos);
-tunzSetOffset unzSetOffset = (tunzSetOffset)(0x81d35c5);
-
-typedef int (__cdecl *tunzReadCurrentFile)(unzFile file, void *buf, unsigned len);
-tunzReadCurrentFile unzReadCurrentFile = (tunzReadCurrentFile)(0x81d37db);
 
 /*
 ==============
@@ -1279,7 +1263,7 @@ void FS_SV_WriteFile( const char *qpath, const void *buffer, int size ) {
 	FS_FCloseFile( f );
 }
 
-
+#define MAXPRINTMSG 1024
 
 void QDECL FS_Printf( fileHandle_t h, const char *fmt, ... ) {
 	va_list		argptr;
@@ -1390,7 +1374,7 @@ FS_SV_HomeCopyFile
 Copy a fully specified file from one place to another
 =================
 */
-static void FS_SV_HomeCopyFile( char *from, char *to ) {
+void FS_SV_HomeCopyFile( char *from, char *to ) {
 	FILE	*f;
 	int		len;
 	byte	*buf;

@@ -1,3 +1,16 @@
+#ifndef __FILESYSTEM_H__
+#define __FILESYSTEM_H__
+
+#include "q_shared.h"
+
+
+#define fs_game getcvaradr(0x13f9da18)
+#define fs_debug getcvaradr(0x13f9da00)
+#define fs_basepath getcvaradr(0x13f9da08)
+#define fs_homepath getcvaradr(0x13f9da04)
+#define getcvaradr(adr) ((cvar_t*)(*(int*)(adr)))
+
+
 #define fsh_ADDR 0x13f9da40
 #define fs_loadStack_ADDR 0x13f9d8e4
 #define fs_gamedir_ADDR 0x13f9d900
@@ -37,7 +50,7 @@
 //#define MAX_OSPATH 256
 #define MAX_FILE_HANDLES 48
 
-//typedef int	fileHandle_t;
+typedef int	fileHandle_t;
 typedef void*	unzFile;
 
 // mode parm for FS_FOpenFile
@@ -131,5 +144,56 @@ char lastValidGame[MAX_OSPATH];
 
 #ifdef FS_MISSING
 FILE*		missingFiles = NULL;
+#endif
+
+void FS_CopyFile(char* FromOSPath,char* ToOSPath);
+int FS_Read(void* data, int length, fileHandle_t);
+int FS_FOpenFileRead(const char* filename,fileHandle_t* returnhandle);
+fileHandle_t FS_FOpenFileWrite(const char* filename);
+fileHandle_t FS_FOpenFileAppend(const char* filename);
+qboolean FS_Initialized();
+int FS_filelength( fileHandle_t f );
+
+unzFile unzOpen(const char* path);
+int unzOpenCurrentFile(unzFile file);
+int unzSetOffset(unzFile file, unsigned long pos);
+int unzReadCurrentFile(unzFile file, void *buf, unsigned len);
+
+char *FS_BuildOSPath( const char *base, const char *game, const char *qpath );
+qboolean FS_HomeRemove( const char *path );
+qboolean FS_SV_HomeRemove( const char *path );
+
+qboolean FS_FileExists( const char *file );
+
+char* FS_SV_GetFilepath( const char *file );
+void FS_Rename( const char *from, const char *to );
+void FS_SV_Rename( const char *from, const char *to );
+qboolean FS_FCloseFile( fileHandle_t f );
+qboolean FS_FilenameCompare( const char *s1, const char *s2 );
+char *FS_ShiftedStrStr(const char *string, const char *substring, int shift);
+long FS_fplength(FILE *h);
+
+qboolean FS_IsExt(const char *filename, const char *ext, int namelen);
+
+void FS_ConvertPath( char *s );
+
+int FS_PathCmp( const char *s1, const char *s2 );
+int	FS_FTell( fileHandle_t f );
+void	FS_Flush( fileHandle_t f );
+void FS_FreeFile( void *buffer );
+int FS_ReadLine( void *buffer, int len, fileHandle_t f );
+fileHandle_t FS_SV_FOpenFileWrite( const char *filename );
+int FS_SV_FOpenFileRead( const char *filename, fileHandle_t *fp );
+fileHandle_t FS_SV_FOpenFileAppend( const char *filename );
+int FS_Write( const void *buffer, int len, fileHandle_t h );
+int FS_ReadFile( const char *qpath, void **buffer );
+void FS_WriteFile( const char *qpath, const void *buffer, int size );
+void FS_SV_WriteFile( const char *qpath, const void *buffer, int size );
+void QDECL FS_Printf( fileHandle_t h, const char *fmt, ... );
+int FS_Seek( fileHandle_t f, long offset, int origin );
+DLL_PUBLIC __cdecl const char* FS_GetBasepath();
+qboolean FS_VerifyPak( const char *pak );
+void	FS_ForceFlush( fileHandle_t f );
+
 #endif
 

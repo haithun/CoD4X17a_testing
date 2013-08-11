@@ -223,15 +223,6 @@ int script_CallBacks_new[8];
 qboolean say_forwardAll;
 
 
-typedef struct{
-	char lastCommand[32];
-	int lastTicket;
-	char recvData[MAX_TOKEN_CHARS];
-	char sendData[MAX_TOKEN_CHARS];
-}scrMasterCommBuff_t;
-
-scrMasterCommBuff_t scrCommBuff;
-
 typedef int fieldtype_t;
 
 typedef struct
