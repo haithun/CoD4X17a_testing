@@ -179,6 +179,7 @@ static byte patchblock_NET_OOB_CALL3[] = { 0x41, 0xB5, 0x17, 0x8,
 	SetJump(0x808b764, ClientScr_SetSessionTeam);
 	SetJump(0x80b43c4, G_LogPrintf);
 	SetJump(0x80a8068, ClientUserinfoChanged);
+	SetJump(0x81aa0be, Info_SetValueForKey);
 
 	//ToDo build Mem_Init() on its own
 
