@@ -33,6 +33,8 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include <stdio.h>
 
+#pragma pack(1)
+
 #ifndef __stdcall
 #define __stdcall __attribute__((stdcall))
 #endif

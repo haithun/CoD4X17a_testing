@@ -732,7 +732,7 @@ int Huff_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize){
 
 
 
-void Huff_initHuffman() {
+void MSG_initHuffman() {
 	int i,j;
 
 	huffInit = qtrue;

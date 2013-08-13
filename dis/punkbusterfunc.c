@@ -1,3 +1,6 @@
+#include "q_shared.h"
+#include "sys_net.h"
+#include <string.h>
 
 /*********************************************************************************************/
 //		Mandatory functions for PunkBuster operation

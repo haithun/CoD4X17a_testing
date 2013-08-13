@@ -20,13 +20,22 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#include "sys_local.h"
+#include "sys_con_tty.h"
+#include "q_shared.h"
+#include "cmd_completion.h"
+#include "qcommon_io.h"
+#include "cvar.h"
+
 
 #include <unistd.h>
 #include <signal.h>
 #include <termios.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#include <string.h>
+#include <stdlib.h>
+#include <assert.h>
+
 
 /*
 =============================================================
@@ -38,7 +47,8 @@ called before and after a stdout or stderr output
 =============================================================
 */
 
-static qboolean stdinIsATTY;
+static cvar_t* com_ansiColor;
+
 static qboolean stdin_active;
 // general flag to tell about tty console mode
 static qboolean ttycon_on = qfalse;
@@ -61,9 +71,9 @@ static int hist_current = -1, hist_count = 0;
 void Field_AutoComplete( field_t *field );
 
 
-
-
-
+#ifndef MAXPRINTMSG
+#define MAXPRINTMSG 1024
+#endif
 
 
 /*
@@ -267,6 +277,9 @@ void CON_SigCont(int signum)
 	CON_Init();
 }
 
+#ifndef _isatty
+#define _isatty isatty
+#endif
 
 /*
 ==================
@@ -278,6 +291,8 @@ Initialize the console input (tty mode if possible)
 void CON_Init( void )
 {
 	struct termios tc;
+	qboolean stdinIsATTY;
+	const char* term = getenv( "TERM" );
 
 	// If the process is backgrounded (running non interactively)
 	// then SIGTTIN or SIGTOU is emitted, if not caught, turns into a SIGSTP
@@ -289,6 +304,8 @@ void CON_Init( void )
 
 	// Make stdin reads non-blocking
 	fcntl(STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL, 0) | O_NONBLOCK );
+
+	stdinIsATTY = _isatty( STDIN_FILENO ) && !( term && ( !strcmp( term, "raw" ) || !strcmp( term, "dumb" ) ) );
 
 	if (!stdinIsATTY)
 	{
@@ -324,6 +341,8 @@ void CON_Init( void )
 	tc.c_cc[VTIME] = 0;
 	tcsetattr (STDIN_FILENO, TCSADRAIN, &tc);
 	ttycon_on = qtrue;
+
+	com_ansiColor = Cvar_RegisterBool("com_ansiColor", qtrue, CVAR_ARCHIVE, "Use ansi colors for sysconsole output");
 }
 
 
@@ -485,310 +504,77 @@ void CON_Print( const char *msg )
 	CON_Show( );
 }
 
-
 //============================================================================
 //============================================================================
 
 
-/*
-===========================================
-command line completion
-===========================================
-*/
 
 /*
-==================
-Field_Clear
-==================
+=================
+Sys_AnsiColorPrint
+
+Transform Q3 colour codes to ANSI escape sequences
+=================
 */
-void Field_Clear( field_t *edit ) {
-	memset(edit->buffer, 0, MAX_EDIT_LINE);
-	edit->cursor = 0;
-	edit->scroll = 0;
-}
-
-static const char *completionString;
-static char shortestMatch[MAX_TOKEN_CHARS];
-static int	matchCount;
-// field we are working on, passed to Field_AutoComplete(&g_consoleCommand for instance)
-static field_t *completionField;
-
-
-
-/*
-============
-Cmd_CommandCompletion
-============
-*/
-void	Cmd_CommandCompletion( void(*callback)(const char *s) ) {
-	cmd_function_t	*cmd;
-	
-	for (cmd=cmd_functions ; cmd ; cmd=cmd->next) {
-		callback( cmd->name );
-	}
-}
-
-/*
-============
-Cmd_CompleteArgument
-============
-*/
-void Cmd_CompleteArgument( const char *command, char *args, int argNum ) {
-	cmd_function_t	*cmd;
-
-	for( cmd = cmd_functions; cmd; cmd = cmd->next ) {
-		if( !Q_stricmp( command, cmd->name ) && cmd->complete ) {
-			cmd->complete( args, argNum );
-		}
-	}
-}
-
-
-/*
-===============
-FindMatches
-
-===============
-*/
-static void FindMatches( const char *s ) {
-	int		i;
-
-	if ( Q_stricmpn( s, completionString, strlen( completionString ) ) ) {
-		return;
-	}
-	matchCount++;
-	if ( matchCount == 1 ) {
-		Q_strncpyz( shortestMatch, s, sizeof( shortestMatch ) );
-		return;
-	}
-
-	// cut shortestMatch to the amount common with s
-	for ( i = 0 ; shortestMatch[i] ; i++ ) {
-		if ( i >= strlen( s ) ) {
-			shortestMatch[i] = 0;
-			break;
-		}
-
-		if ( tolower(shortestMatch[i]) != tolower(s[i]) ) {
-			shortestMatch[i] = 0;
-		}
-	}
-}
-
-/*
-===============
-PrintMatches
-
-===============
-*/
-static void PrintMatches( const char *s ) {
-	if ( !Q_stricmpn( s, shortestMatch, strlen( shortestMatch ) ) ) {
-		Com_Printf( "    %s\n", s );
-	}
-}
-
-/*
-============
-Cvar_CommandCompletion
-============
-*/
-void	Cvar_CommandCompletionPrint( cvar_t const *cvar, void* none) {
-		PrintMatches( cvar->name );
-}
-
-void	Cvar_CommandCompletionFind( cvar_t const *cvar, void* none) {
-		FindMatches( cvar->name );
-}
-
-
-/*
-===============
-Field_FindFirstSeparator
-===============
-*/
-static char *Field_FindFirstSeparator( char *s )
+void Sys_AnsiColorPrint( const char *msg )
 {
-	int i;
-
-	for( i = 0; i < strlen( s ); i++ )
+	static char buffer[ MAXPRINTMSG ];
+	int         length = 0;
+	static int  q3ToAnsi[ 8 ] =
 	{
-		if( s[ i ] == ';' )
-			return &s[ i ];
-	}
+		30, // COLOR_BLACK
+		31, // COLOR_RED
+		32, // COLOR_GREEN
+		33, // COLOR_YELLOW
+		34, // COLOR_BLUE
+		36, // COLOR_CYAN
+		35, // COLOR_MAGENTA
+		0   // COLOR_WHITE
+	};
 
-	return NULL;
-}
-
-/*
-===============
-Field_Complete
-===============
-*/
-static qboolean Field_Complete( void )
-{
-	int completionOffset;
-
-	if( matchCount == 0 )
-		return qtrue;
-
-	completionOffset = strlen( completionField->buffer ) - strlen( completionString );
-
-	Q_strncpyz( &completionField->buffer[ completionOffset ], shortestMatch,
-		sizeof( completionField->buffer ) - completionOffset );
-
-	completionField->cursor = strlen( completionField->buffer );
-
-	if( matchCount == 1 )
+	while( *msg )
 	{
-		Q_strcat( completionField->buffer, sizeof( completionField->buffer ), " " );
-		completionField->cursor++;
-		return qtrue;
-	}
-
-	Com_Printf( "]%s\n", completionField->buffer );
-
-	return qfalse;
-}
-
-/*
-===============
-Field_CompleteFilename
-===============
-*//*
-void Field_CompleteFilename( const char *dir,
-		const char *ext, qboolean stripExt, qboolean allowNonPureFilesOnDisk )
-{
-	matchCount = 0;
-	shortestMatch[ 0 ] = 0;
-
-	FS_FilenameCompletion( dir, ext, stripExt, FindMatches, allowNonPureFilesOnDisk );
-
-	if( !Field_Complete( ) )
-		FS_FilenameCompletion( dir, ext, stripExt, PrintMatches, allowNonPureFilesOnDisk );
-}
-*/
-
-/*
-===============
-Field_CompleteCommand
-===============
-*/
-
-void Field_CompleteCommand( char *cmd, qboolean doCommands, qboolean doCvars )
-{
-	int		completionArgument = 0;
-
-	// Skip leading whitespace and quotes
-	cmd = Com_SkipCharset( cmd, " \"" );
-
-	Cmd_TokenizeString( cmd );
-	completionArgument = Cmd_Argc( );
-
-
-
-
-	// If there is trailing whitespace on the cmd
-	if( *( cmd + strlen( cmd ) - 1 ) == ' ' )
-	{
-		completionString = "";
-		completionArgument++;
-	}
-	else
-		completionString = Cmd_Argv( completionArgument - 1 );
-
-
-
-
-	if( completionArgument > 1 )
-	{
-		const char *baseCmd = Cmd_Argv( 0 );
-		char *p;
-
-		if( ( p = Field_FindFirstSeparator( cmd ) ) )
-			Field_CompleteCommand( p + 1, qtrue, qtrue ); // Compound command
-		else
-			Cmd_CompleteArgument( baseCmd, cmd, completionArgument );
-
-	}else{
-
-
-
-		if( completionString[0] == '\\' || completionString[0] == '/' )
-			completionString++;
-
-		matchCount = 0;
-		shortestMatch[ 0 ] = 0;
-		
-		if( strlen( completionString ) == 0 ){
-			Cmd_EndTokenizeString( );
-			return;
-		}
-
-		if( doCommands )
-			Cmd_CommandCompletion( FindMatches );
-
-		if( doCvars )
-			Cvar_ForEach(Cvar_CommandCompletionFind, NULL);
-
-		if( !Field_Complete( ) )
+		if( Q_IsColorString( msg ) || *msg == '\n' )
 		{
-			// run through again, printing matches
-			if( doCommands )
-				Cmd_CommandCompletion( PrintMatches );
+			// First empty the buffer
+			if( length > 0 )
+			{
+				buffer[ length ] = '\0';
+				fputs( buffer, stderr );
+				length = 0;
+			}
 
-			if( doCvars )
-				Cvar_ForEach(Cvar_CommandCompletionPrint, NULL);
+			if( *msg == '\n' )
+			{
+				// Issue a reset and then the newline
+				fputs( "\033[0m\n", stderr );
+				msg++;
+			}
+			else
+			{
+				// Print the color code
+				Com_sprintf( buffer, sizeof( buffer ), "\033[1;%dm",
+						q3ToAnsi[ ColorIndex( *( msg + 1 ) ) ] );
+				fputs( buffer, stderr );
+				msg += 2;
+			}
+		}
+		else
+		{
+			if( length >= MAXPRINTMSG - 1 )
+				break;
+
+			buffer[ length ] = *msg;
+			length++;
+			msg++;
 		}
 	}
-	Cmd_EndTokenizeString( );
-}
 
-
-
-
-/*
-===============
-Field_AutoComplete
-
-Perform Tab expansion
-===============
-*/
-void Field_AutoComplete( field_t *field )
-{
-	completionField = field;
-
-	Field_CompleteCommand( completionField->buffer, qtrue, qtrue );
-}
-
-/*
-==================
-Cvar_CompleteCvarName
-==================
-*/
-void Cvar_CompleteCvarName( char *args, int argNum )
-{
-	if( argNum == 2 )
+	// Empty anything still left in the buffer
+	if( length > 0 )
 	{
-		// Skip "<cmd> "
-		char *p = Com_SkipTokens( args, 1, " " );
-
-		if( p > args )
-			Field_CompleteCommand( p, qfalse, qtrue );
-	}
-}
-
-/*
-============
-Cmd_SetCommandCompletionFunc
-============
-*/
-void Cmd_SetCommandCompletionFunc( const char *command, completionFunc_t complete ) {
-	cmd_function_t	*cmd;
-
-	for( cmd = cmd_functions; cmd; cmd = cmd->next ) {
-		if( !Q_stricmp( command, cmd->name ) ) {
-			cmd->complete = complete;
-		}
+		buffer[ length ] = '\0';
+		fputs( buffer, stderr );
 	}
 }
 

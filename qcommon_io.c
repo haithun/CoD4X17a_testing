@@ -1,25 +1,26 @@
 #include "q_shared.h"
-//#include "sys_main.h"
-//#include "sys_thread.h"
+#include "sys_thread.h"
 //#include "filesystem.h"
 #include "qcommon_io.h"
+#include "sys_main.h"
 #include <string.h>
 #include <time.h>
 #include <stdarg.h>
 
 
-#ifndef Sys_EnterCriticalSection
+#ifndef __SYS_THREAD_H__
 void Sys_EnterCriticalSection(int section){}
-#endif
-#ifndef Sys_EnterCriticalSection
 void Sys_LeaveCriticalSection(int section){}
 #endif
-#ifndef Sys_Print
+
+#ifndef __SYS_MAIN_H__
 #define Sys_Print(x) fputs(x, stdout);
 #endif
+
 #ifndef FS_PrintLogfile
 void FS_PrintLogfile( char* msg ){}
 #endif
+
 #ifndef Com_IsDeveloper
 qboolean Com_IsDeveloper( void ){ return qtrue; }
 #endif

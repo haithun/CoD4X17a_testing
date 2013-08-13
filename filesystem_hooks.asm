@@ -32,3 +32,34 @@ global unzReadCurrentFile
 unzReadCurrentFile:
     jmp 0x81d37db
 
+global FS_InitFilesystem
+FS_InitFilesystem:
+    jmp 0x818e980
+
+global FS_Shutdown
+FS_Shutdown:
+    jmp 0x818733a
+
+global FS_ShutdownIwdPureCheckReferences
+FS_ShutdownIwdPureCheckReferences:
+    jmp  0x81866b6
+
+global FS_ShutdownServerIwdNames
+FS_ShutdownServerIwdNames:
+    jmp  0x8186cfe
+
+global FS_ShutdownServerReferencedIwds
+FS_ShutdownServerReferencedIwds:
+    jmp  0x818789c
+
+global FS_ShutdownServerReferencedFFs
+FS_ShutdownServerReferencedFFs:
+    jmp  0x8187850
+
+global FS_LoadedIwdPureChecksums
+FS_LoadedIwdPureChecksums:
+    jmp  0x81283f2
+
+global FS_GetMapBaseName
+FS_GetMapBaseName:
+    jmp  0x8127e0c

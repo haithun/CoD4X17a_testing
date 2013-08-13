@@ -1,69 +1,200 @@
-//typedef int32_t DWORD;
+#include "q_shared.h"
+#include "sys_main.h"
+#include "sys_cod4defs.h"
+#include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <dlfcn.h>
 
-#include "sys_patch.h"
 
-void Sys_RetriveData(){
 
-    #define startADR 0x817b541
-    #define endADR 0x817b56b
+#define ELF_TYPEOFFSET 16
+#define DLLMOD_FILESIZE 2281820
 
-    FILE * fdout;
-    byte* adr;
-    int i;
+static qboolean Sys_PatchImage();
 
-    adr = (byte*)(startADR);
+static qboolean Sys_LoadImagePrepareFile(const char* path)
+{
+        FILE* fp;
+        int rval, trys;
+        char cmdline[MAX_OSPATH];
+        char copypath[MAX_OSPATH];
+        const char* dir;
 
-    char buf[32];
+        if(path == NULL)
+            return qfalse;
 
-    fdout=fopen("diffout.bin", "w");
-    if(fdout){
+        //Get directory name
+        Q_strncpyz(copypath, path, sizeof(copypath)); //Copy 1st because the behaviour of dirname()is undefined
+        dir = Sys_Dirname( copypath );
 
-        fwrite("static byte patchblock_??[] = {", 1, 31 ,fdout);
-
-        Com_sprintf(buf, sizeof(buf), " 0x%X, 0x%X, 0x%X, 0x%X, ", (int)adr & 0xff, ((int)adr >> 8) & 0xff, ((int)adr >> 16) & 0xff, ((int)adr >> 24) & 0xff);
-
-        fwrite(buf, 1, strlen(buf),fdout);
-
-        for(i = 0; i < endADR - startADR +1; i++, adr++)
+        //Test directory permissions:
+        if(access(dir, F_OK) != 0)
         {
-            if(i % 16 == 0)
-            {
-                fwrite("\n\t", 1, 2 ,fdout);
-            }
-
-            Com_sprintf(buf, sizeof(buf), "0x%X, ", *adr);
-            fwrite(buf, 1, strlen(buf) ,fdout);
+            printf("Error directory %s seems not to exist: %s\n", dir, strerror(errno));
+            return qfalse;
         }
 
-        fwrite("\n};\n", 1, 3 ,fdout);
-        fclose(fdout);
+        if(access(dir, R_OK) != 0)
+        {
+            printf("Read access to directory %s is denied: %s\n", dir, strerror(errno));
+            return qfalse;
+        }
+
+        if(access(dir, W_OK) != 0)
+        {
+            printf("Write access to directory %s is denied: %s\n", dir, strerror(errno));
+            return qfalse;
+        }
+
+        trys = 0;
+
+        if(access(path, F_OK) != 0)
+        {
+            printf("The file %s seems not to exist\n", path);
+
+        dl_again:
+            printf("Trying to download...\n");
+
+            Com_sprintf(cmdline, sizeof(cmdline), "wget -O %s %s", path, "http://update.iceops.in/cod4_lnxded.so");
+            rval = system( cmdline );
+            if(rval != 0)
+            {
+                printf("Failed to download cod4_lnxded.so\nPlease make sure you are connected to the internet or install this file manually: %s\n", path);
+                return qfalse;
+            }
+
+            if(access(path, F_OK) != 0)
+            {
+                printf("Failed to install cod4_lnxded.so\nPlease try to install this file manually: %s\n", path);
+                return qfalse;
+
+            }
+        }
+
+        if(access(path, R_OK) != 0)
+        {
+            printf("Read access to file %s is denied: %s\n", path, strerror(errno));
+            return qfalse;
+        }
+
+        if(access(path, W_OK) != 0)
+        {
+            printf("Write access to file %s is denied: %s\n", path, strerror(errno));
+            return qfalse;
+        }
+
+        //Test if it is the correct file and see if it is already a shared object
+        fp = fopen(path, "rb");
+        if(fp)
+        {
+            if( !fseek(fp, 0, SEEK_END) && ftell(fp) == DLLMOD_FILESIZE && !fseek(fp, ELF_TYPEOFFSET, SEEK_SET))
+            {
+                if(fgetc(fp) == 3)
+                { //The elf type is shared library already
+                    fclose(fp);
+                    return qtrue;
+                }
+                //The elf type is exe file - we have to make it a shared library
+                fclose(fp);
+
+            }else{
+                //The file can not be read or the size is wrong
+                fclose(fp);
+                printf("The file %s can not be read or has a wrong size.\n", path);
+                if(trys < 1)
+                {
+                    printf("Deleting file: %s\n", path);
+                    if(remove(path) != 0)
+                    {
+                        printf("Couldn't delete file %s Error: %s\n", path, strerror(errno));
+                        return qfalse;
+                    }
+                    trys++;
+                    goto dl_again;
+                }
+                return qfalse;
+            }
+
+        }else{
+            printf("Failed to open file %s for reading - Error: %s\n", path, strerror(errno));
+            return qfalse;
+        }
+
+        //Try to make it a shared object
+        fp = fopen(path, "rb+");
+        if(fp)
+        {
+            if(fseek(fp, ELF_TYPEOFFSET, SEEK_SET) != 0)
+            {
+                printf("Seek error on file %s opened for writing - Error: %s\n", path, strerror(errno));
+                fclose(fp);
+                return qfalse;
+            }
+
+            if(fputc(3, fp) == 3)
+            {
+                fclose(fp);
+                return qtrue;
+            }
+
+            printf("Failed to write to file %s - Error: %s\n", path, strerror(errno));
+            fclose(fp);
+            return qfalse;
+        }
+
+        printf("Failed to open file %s for writing - Error: %s\n", path, strerror(errno));
+        return qfalse;
+
+}
+
+
+
+
+/*
+=============
+Sys_LoadImage
+
+=============
+*/
+void Sys_LoadImage( ){
+
+    void *dl;
+    char *error;
+    char module[MAX_OSPATH];
+
+    Com_sprintf(module, sizeof(module), "%s/%s", Sys_BinaryPath(), COD4_DLL);
+
+    if(!Sys_LoadImagePrepareFile( module ))
+    {
+        printf("An error has occurred. Exiting...\n");
+        _exit(1);
     }
 
-    _exit(0);
+    dl = dlopen(module, RTLD_LAZY);
+
+    if(dl == NULL)
+    {
+        error = dlerror();
+        printf("Failed to load required module: %s Error: %s\n", module, error);
+        _exit(1);
+
+    }
+    /* No retrieving of symbols where none are :( */
+
+    if(!Sys_PatchImage())
+    {
+        printf("Failed to patch module: %s\n", module);
+        _exit(1);
+    }
 }
 
 
 
-void Sys_PatchImageWithBlock(byte *block, int blocksize)
+static void Sys_PatchImageData( void )
 {
-
-    int startadr;
-    byte* startadrasbytes = (byte*)&startadr;
-
-    startadrasbytes[0] = block[0];
-    startadrasbytes[1] = block[1];
-    startadrasbytes[2] = block[2];
-    startadrasbytes[3] = block[3];
-
-//    printf("Block Start address is: %X\n", startadr);
-
-    memcpy((void*)startadr, &block[4], blocksize - 4);
-
-}
-
-void Sys_PatchImageData( void )
-{
-
+/*
 static byte patchblock_01[] = { 0xAE, 0xA, 0x5, 0x8, 
 	0x89, 0x3C, 0x24, 0xE8, 0xCC, 0xCC, 0xCC, 0xCC, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 
 	0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 
@@ -186,11 +317,11 @@ static byte patchblock_NET_OOB_CALL3[] = { 0x41, 0xB5, 0x17, 0x8,
 	*(char*)0x8215ccc = '\n'; //adds a missing linebreak
 	*(char*)0x8222ebc = '\n'; //adds a missing linebreak
 	*(char*)0x8222ebd = '\0'; //adds a missing linebreak
-
+*/
 }
 
 
-qboolean Sys_PatchImage()
+static qboolean Sys_PatchImage()
 {
 
 	if(!Sys_MemoryProtectWrite((void*)(IMAGE_BASE + TEXT_SECTION_OFFSET), TEXT_SECTION_LENGTH))
@@ -212,47 +343,3 @@ qboolean Sys_PatchImage()
 }
 
 
-DWORD SetCall(DWORD addr, void* destination){
-
-	DWORD callwidth;
-	DWORD restore;
-	byte* baddr = (byte*)addr;
-
-	callwidth = (DWORD)( destination - (void*)baddr - 5);
-	*baddr = 0xe8;
-	baddr++;
-
-	restore = *(DWORD*)baddr;
-	*(DWORD*)baddr = callwidth;
-
-	return restore;
-}
-
-DWORD SetCallFSO(DWORD addr, void* destination){
-
-    return SetCall( addr + IMAGE_BASE, destination);
-
-}
-
-
-DWORD SetJump(DWORD addr, void* destination){
-
-	DWORD jmpwidth;
-	DWORD restore;
-	byte* baddr = (byte*)addr;
-
-	jmpwidth = (DWORD)( destination - (void*)baddr - 5);
-	*baddr = 0xe9;
-	baddr++;
-
-	restore = *(DWORD*)baddr;
-	*(DWORD*)baddr = jmpwidth;
-
-	return restore;
-}
-
-DWORD SetJumpFSO(DWORD addr, void* destination){
-
-    return SetJump( addr + IMAGE_BASE, destination);
-
-}

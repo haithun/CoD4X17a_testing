@@ -197,6 +197,7 @@ or configs will never get loaded from disk!
 #include "filesystem.h"
 #include "qcommon_io.h"
 #include "cvar.h"
+#include "q_platform.h"
 
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -204,6 +205,9 @@ or configs will never get loaded from disk!
 #include <unistd.h>
 
 
+static fileHandle_t logfile;
+static fileHandle_t adminlogfile;
+static fileHandle_t debuglogfile;
 
 /*
 typedef int (__cdecl *tFS_ReadFile)(const char* qpath, void **buffer);
@@ -1455,8 +1459,18 @@ qboolean FS_VerifyPak( const char *pak ) {
 	return qfalse;
 }
 
-
-
+/*
+This function should close all opened non Zip files
+*/
+void FS_CloseLogFiles()
+{
+	if(adminlogfile)
+		FS_FCloseFile( adminlogfile );
+	if(logfile)
+		FS_FCloseFile( logfile );
+	if(debuglogfile)
+		FS_FCloseFile( debuglogfile );
+}
 
 /*
 ============

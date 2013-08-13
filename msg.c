@@ -24,9 +24,17 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "msg.h"
 #include "qcommon_io.h"
+#include "net_game_conf.h"
+#include "huffman.h"
+
+#ifndef	MAX_MSGLEN
+#define	MAX_MSGLEN	0x20000		// max length of a message, which may
+#endif
+
 
 
 #ifndef __HUFFMAN_H__
+#pragma message "Function MSG_initHuffman() is undefined"
 void MSG_initHuffman(){}
 #endif
 

@@ -26,8 +26,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "q_shared.h"
 #include "entity.h"
 
-#define	MAX_MSGLEN	0x20000		// max length of a message, which may
-
 //
 // msg.c
 //

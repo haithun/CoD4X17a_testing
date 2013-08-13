@@ -953,6 +953,9 @@ __optimize3 __regparm2 void SV_PacketEvent( netadr_t *from, msg_t *msg ) {
 	client_t    *cl;
 	short qport;
 
+	if(!com_sv_running->boolean)
+            return;
+
 	// check for connectionless packet (0xffffffff) first
 	if ( msg->cursize >= 4 && *(int *)msg->data == -1 ) {
 		SV_ConnectionlessPacket( from, msg );

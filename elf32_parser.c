@@ -1,4 +1,8 @@
+#include "qcommon_io.h"
+#include <string.h>
 #include <elf.h>
+#include <stdlib.h>
+
 typedef struct{
     long size;
     long offset;

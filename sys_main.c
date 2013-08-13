@@ -19,9 +19,28 @@ along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
+#include "q_shared.h"
+#include "sys_main.h"
+#include "q_platform.h"
+#include "qcommon_io.h"
+#include "qcommon.h"
+#include "sys_cod4defs.h"
+#include "sys_con_tty.h"
+#include "filesystem.h"
+#include "sys_cod4loader.h"
+#include "sys_thread.h"
+#include "punkbuster.h"
 
 #include <sys/resource.h>
 #include <libgen.h>
+#include <signal.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/time.h>
+#include <wait.h>
+#include <fpu_control.h>
 
 #define MAX_QUED_EVENTS 256
 #define sys_timeBaseInt_ADDR 0x1411c5c4
@@ -33,6 +52,10 @@ static char exit_cmdline[MAX_CMD] = "";
 
 static char binaryPath[ MAX_OSPATH ] = { 0 };
 static char installPath[ MAX_OSPATH ] = { 0 };
+
+#ifndef MAXPRINTMSG
+#define MAXPRINTMSG 1024
+#endif
 
 
 /*
@@ -190,14 +213,10 @@ void Sys_SigHandler( int signal )
 		signalcaught = qtrue;
 		Com_Printf("Server received signal: %s\nShutting down server...\n", strsignal(signal));
 		SV_Shutdown(va("\nServer received signal: %s\nTerminating server...", strsignal(signal)) );
-		Sys_EnterCriticalSection( 2 );
-		if(logfile)
-			FS_FCloseFile(logfile);
-		if(adminlogfile)
-			FS_FCloseFile(adminlogfile);
-		if(reliabledump)
-			FS_FCloseFile(reliabledump);
 
+		Sys_EnterCriticalSection( 2 );
+
+		FS_CloseLogFiles(); //close all open logfiles
 		FS_Shutdown(qtrue);
 	}
 
@@ -229,74 +248,6 @@ char *Sys_ConsoleInput(void)
 	return CON_Input( );
 }
 
-/*
-=================
-Sys_AnsiColorPrint
-
-Transform Q3 colour codes to ANSI escape sequences
-=================
-*/
-void Sys_AnsiColorPrint( const char *msg )
-{
-	static char buffer[ MAXPRINTMSG ];
-	int         length = 0;
-	static int  q3ToAnsi[ 8 ] =
-	{
-		30, // COLOR_BLACK
-		31, // COLOR_RED
-		32, // COLOR_GREEN
-		33, // COLOR_YELLOW
-		34, // COLOR_BLUE
-		36, // COLOR_CYAN
-		35, // COLOR_MAGENTA
-		0   // COLOR_WHITE
-	};
-
-	while( *msg )
-	{
-		if( Q_IsColorString( msg ) || *msg == '\n' )
-		{
-			// First empty the buffer
-			if( length > 0 )
-			{
-				buffer[ length ] = '\0';
-				fputs( buffer, stderr );
-				length = 0;
-			}
-
-			if( *msg == '\n' )
-			{
-				// Issue a reset and then the newline
-				fputs( "\033[0m\n", stderr );
-				msg++;
-			}
-			else
-			{
-				// Print the color code
-				Com_sprintf( buffer, sizeof( buffer ), "\033[1;%dm",
-						q3ToAnsi[ ColorIndex( *( msg + 1 ) ) ] );
-				fputs( buffer, stderr );
-				msg += 2;
-			}
-		}
-		else
-		{
-			if( length >= MAXPRINTMSG - 1 )
-				break;
-
-			buffer[ length ] = *msg;
-			length++;
-			msg++;
-		}
-	}
-
-	// Empty anything still left in the buffer
-	if( length > 0 )
-	{
-		buffer[ length ] = '\0';
-		fputs( buffer, stderr );
-	}
-}
 
 void Sys_PrintBinVersion( const char* name ) {
 
@@ -320,6 +271,26 @@ void Sys_ParseArgs( int argc, char* argv[] ) {
 			Sys_Exit( 0 );
 		}
 	}
+}
+
+
+
+/*
+==============
+Sys_PlatformInit
+
+Unix specific initialisation
+==============
+*/
+void Sys_PlatformInit( void )
+{
+	signal( SIGHUP, Sys_SigHandler );
+	signal( SIGQUIT, Sys_SigHandler );
+	signal( SIGTRAP, Sys_SigHandler );
+	signal( SIGIOT, Sys_SigHandler );
+	signal( SIGBUS, Sys_SigHandler );
+//	signal( SIGCHLD, Sys_TermProcess );
+
 }
 
 

@@ -39,4 +39,3 @@ Cbuf_ExecuteBuffer:
 global Cbuf_AddText
 Cbuf_AddText:
     jmp 0x8110ff8
-

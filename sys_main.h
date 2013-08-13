@@ -1,3 +1,6 @@
+#ifndef __SYS_MAIN_H__
+#define __SYS_MAIN_H__
+
 #include "q_shared.h"
 
 int Sys_Milliseconds( void );
@@ -18,5 +21,16 @@ char *Sys_BinaryPath(void);
 void Sys_SetDefaultInstallPath(const char *path);
 char *Sys_DefaultInstallPath(void);
 char *Sys_DefaultAppPath(void);
-void Sys_EnterCriticalSection(int section);
-void Sys_LeaveCriticalSection(int section);
+//sys_unix.c
+qboolean Sys_RandomBytes( byte *string, int len );
+void Sys_DoStartProcess( char *cmdline );
+const char *Sys_Dirname( char *path );
+char *Sys_Cwd( void );
+void Sys_InitCrashDumps();
+qboolean Sys_MemoryProtectWrite(void* startoffset, int len);
+qboolean Sys_MemoryProtectExec(void* startoffset, int len);
+qboolean Sys_MemoryProtectReadonly(void* startoffset, int len);
+const char *Sys_DefaultHomePath(void);
+const char *Sys_TempPath( void );
+
+#endif

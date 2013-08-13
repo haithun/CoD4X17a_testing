@@ -19,7 +19,15 @@ along with Quake III Arena source code; if not, write to the Free Software
 Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
+#include "qcommon_io.h"
+#include "sys_net.h"
+#include "cvar.h"
+#include "q_platform.h"
+#include "net_game_conf.h"
+#include "cmd.h"
 
+#include <string.h>
+#include <stdlib.h>
 
 #ifdef _WIN32
 #	include <winsock2.h>
@@ -91,7 +99,53 @@ typedef int	ioctlarg_t;
 
 #define	MAX_IPS		32
 
-static qboolean usingSocks = qfalse;
+#ifndef MAX_MSGLEN
+#define MAX_MSGLEN 0x20000
+#endif
+
+#ifndef __CMD_H__
+void Cmd_AddCommand(char* name, void* fun){}
+#endif
+
+#ifdef Com_GetFrameMsec
+#define NET_TimeGetTime Com_GetFrameMsec
+#endif
+
+#ifndef NET_TimeGetTime
+unsigned int net_timeBase;
+int NET_TimeGetTime( void )
+{
+	struct timeval tp;
+	gettimeofday( &tp, NULL );
+	if ( !net_timeBase )
+		net_timeBase = tp.tv_sec;
+
+	return ( tp.tv_sec - net_timeBase ) * 1000 + tp.tv_usec / 1000;
+}
+#endif
+
+#ifndef TCP_ConnectionClosed
+#pragma message "Function TCP_ConnectionClosed is undefined"
+void TCP_ConnectionClosed(netadr_t* adr, int sock, int connectionId, int serviceId){}
+#endif
+#ifndef UDP_PacketEvent
+#pragma message "Function UDP_PacketEvent is undefined"
+void UDP_PacketEvent(netadr_t* from, void* data, int len){}
+#endif
+#ifndef TCP_AuthPacketEvent
+#pragma message "Function TCP_AuthPacketEvent is undefined"
+tcpclientstate_t TCP_AuthPacketEvent(netadr_t* remote, byte* bufData, int cursize, int* sock, int* connectionId, int *serviceId){ return TCP_AUTHSUCCESSFULL; }
+#endif
+#ifndef TCP_PacketEvent
+#pragma message "Function TCP_PacketEvent is undefined"
+void TCP_PacketEvent(netadr_t* remote, byte* bufData, int cursize, int* sock, int connectionId, int serviceId){}
+#endif
+
+
+//static qboolean usingSocks = qfalse;
+//static struct sockaddr	socksRelayAddr;
+//static char socksBuf[4096];
+
 static int networkingEnabled = 0;
 
 static cvar_t	*net_enabled;
@@ -111,7 +165,7 @@ static cvar_t	*net_mcast6iface;
 
 static cvar_t	*net_dropsim;
 
-static struct sockaddr	socksRelayAddr;
+
 
 typedef struct{
 
@@ -126,7 +180,7 @@ static netadr_t	ip_defaultSock = { 0 };
 static SOCKET	tcp_socket = INVALID_SOCKET;
 static SOCKET	tcp6_socket = INVALID_SOCKET;
 static SOCKET	socks_socket = INVALID_SOCKET;
-static SOCKET	multicast6_socket = INVALID_SOCKET;
+//static SOCKET	multicast6_socket = INVALID_SOCKET;
 
 pthread_t net_thread;
 
@@ -162,13 +216,13 @@ static int numIP;
 
 
 #define MAX_TCPCONNECTIONS 120
-#define MIN_TCPAUTHWAITTIME 320000
-#define MAX_TCPAUTHWAITTIME 3000000
-#define MAX_TCPCONNECTEDTIMEOUT 1800000000 //30 minutes - close this if we have too many waiting connections
+#define MIN_TCPAUTHWAITTIME 320
+#define MAX_TCPAUTHWAITTIME 3000
+#define MAX_TCPCONNECTEDTIMEOUT 1800000 //30 minutes - close this if we have too many waiting connections
 
 typedef struct{
 	netadr_t		remote;
-	unsigned long long	lastMsgTime;
+	unsigned int		lastMsgTime;
 	int			connectionId;
 	int			serviceId;
 	tcpclientstate_t	state;
@@ -711,7 +765,7 @@ Receive one packet
 int	recvfromCount;
 #endif
 
-__optimize3 __regparm3 qboolean NET_GetPacket(netadr_t *net_from, msg_t *net_message, int socket)
+__optimize3 __regparm3 int NET_GetPacket(netadr_t *net_from, void *net_message, int maxsize, int socket)
 {
 	int 	ret;
 	struct sockaddr_storage from;
@@ -725,7 +779,7 @@ __optimize3 __regparm3 qboolean NET_GetPacket(netadr_t *net_from, msg_t *net_mes
 	if(socket != INVALID_SOCKET)
 	{
 		fromlen = sizeof(from);
-		ret = recvfrom( socket, (void *)net_message->data, net_message->maxsize, 0, (struct sockaddr *) &from, &fromlen );
+		ret = recvfrom( socket, net_message, maxsize, 0, (struct sockaddr *) &from, &fromlen );
 		
 		if (ret == SOCKET_ERROR)
 		{
@@ -754,24 +808,22 @@ __optimize3 __regparm3 qboolean NET_GetPacket(netadr_t *net_from, msg_t *net_mes
 			}
 			else {*/
 				SockadrToNetadr( (struct sockaddr *) &from, net_from, qfalse, socket);
-				net_message->readcount = 0;
 //			}
 		
-			if( ret >= net_message->maxsize ) {
+			if( ret >= maxsize ) {
 				Com_PrintWarningNoRedirect( "Oversize packet from %s\n", NET_AdrToString (net_from) );
-				return qfalse;
+				return -1;
 			}
 			
-			net_message->cursize = ret;
-			return qtrue;
+			return ret;
 		}
 	}
-	return qfalse;
+	return -1;
 }
 
 //=============================================================================
 
-static char socksBuf[4096];
+
 
 /*
 ==================
@@ -1829,7 +1881,7 @@ static qboolean NET_GetCvars( void ) {
 #else
 	/* End users have it enabled so they can connect to ipv6-only hosts, but ipv4 will be
 	 * used if available due to ping */
-	net_enabled = Cvar_RegisterInt( "net_enabled", 1, 0, 8 CVAR_LATCH | CVAR_ARCHIVE, "Enables / Disables Network");
+	net_enabled = Cvar_RegisterInt( "net_enabled", 1, 0, 8, CVAR_LATCH | CVAR_ARCHIVE, "Enables / Disables Network");
 #endif
 	modified = net_enabled->modified;
 	net_enabled->modified = qfalse;
@@ -2075,20 +2127,20 @@ __optimize3 __regparm3 qboolean NET_TcpConnectionRequest(netadr_t* net_from, int
 }
 
 
-qboolean NET_GetTcpPacket(tcpConnections_t *conn, msg_t *netmsg, qboolean warn){
+int NET_GetTcpPacket(tcpConnections_t *conn, void *netmsg, int maxsize, qboolean warn){
 
 	int err;
 	int ret;
 
 
-	ret = recv(conn->sock, (void *)(netmsg->data + netmsg->cursize), netmsg->maxsize - netmsg->cursize, MSG_DONTWAIT);
+	ret = recv(conn->sock, netmsg, maxsize , MSG_DONTWAIT);
 
 	if(ret == SOCKET_ERROR){
 
 		err = socketError;
 
 		if(err == EAGAIN){
-			return qfalse; //Nothing more to read left
+			return 0; //Nothing more to read left
 		}
 		if(ret == ECONNRESET){
 
@@ -2106,12 +2158,12 @@ qboolean NET_GetTcpPacket(tcpConnections_t *conn, msg_t *netmsg, qboolean warn){
 
 		if(conn->state >= TCP_AUTHSUCCESSFULL){
 			tcpServer.activeConnectionCount--;
-			Com_TcpConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
+			TCP_ConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
 		}
 
 		conn->sock = INVALID_SOCKET;
 		conn->state = 0;
-		return qfalse;
+		return -1;
 
 	}else if(ret == 0){
 
@@ -2120,26 +2172,17 @@ qboolean NET_GetTcpPacket(tcpConnections_t *conn, msg_t *netmsg, qboolean warn){
 		conn->lastMsgTime = 0;//This marks the slot as available
 		if(conn->state >= TCP_AUTHSUCCESSFULL){
 			tcpServer.activeConnectionCount--;
-			Com_TcpConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
+			TCP_ConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
 			Com_Printf("Connection closed by client: %s\n", NET_AdrToString(&conn->remote));
 		}
 		conn->state = 0;
 		conn->sock = INVALID_SOCKET;
-		return qfalse;
+		return -1;
 
 	}else{
 
-		if( ret >= netmsg->maxsize - netmsg->cursize) {
-
-			if(warn)
-				Com_PrintWarning( "Oversize packet from %s\n", NET_AdrToString (&conn->remote));
-
-			netmsg->cursize = netmsg->maxsize -1;
-			return qfalse;
-		}
-		netmsg->cursize = netmsg->cursize + ret;
-		conn->lastMsgTime = com_uFrameTime; //Don't timeout
-		return qtrue;
+		conn->lastMsgTime = NET_TimeGetTime(); //Don't timeout
+		return ret;
 	}
 }
 
@@ -2149,12 +2192,12 @@ void NET_TcpPacketEventLoop(){
 	struct timeval timeout;
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
-	int activefd, i;
+	int activefd, i, ret;
+	int cursize;
 	fd_set fdr;
 	tcpConnections_t	*conn;
 
 	byte bufData[MAX_MSGLEN + 1];
-	msg_t netmsg;
 
 	while(qtrue){
 
@@ -2177,13 +2220,21 @@ void NET_TcpPacketEventLoop(){
 					case TCP_AUTHWAIT:
 					case TCP_AUTHAGAIN:
 
-						MSG_Init(&netmsg, bufData, sizeof(bufData));
-						while(NET_GetTcpPacket(conn, &netmsg, qfalse) && netmsg.cursize < 2048);
+                                                cursize = 0;
+						while( cursize < 2048 )
+                                                {
+                                                    ret = NET_GetTcpPacket(conn, bufData + cursize, sizeof(bufData) - cursize, qfalse);
+
+                                                    if(ret < 1)
+                                                        break;
+                                                    else
+                                                        cursize += ret;
+                                                }
 
 						if(conn->lastMsgTime == 0 || conn->sock < 1){
 							break; //Connection closed unexpected
 						//Close connection, we don't want to process huge messages as auth-packet or want to quit if the login was bad
-						}else if(netmsg.cursize > 2048 || (conn->state = Com_TcpAuthPacketEvent(&conn->remote, &netmsg, &conn->sock, &conn->connectionId, &conn->serviceId)) == TCP_AUTHBAD)
+						}else if(cursize > 2048 || (conn->state = TCP_AuthPacketEvent(&conn->remote, bufData, cursize, &conn->sock, &conn->connectionId, &conn->serviceId)) == TCP_AUTHBAD)
 						{
 							closesocket(conn->sock);
 							conn->lastMsgTime = 0;
@@ -2206,13 +2257,27 @@ void NET_TcpPacketEventLoop(){
 
 					case TCP_AUTHSUCCESSFULL:
 
-						MSG_Init(&netmsg, bufData, sizeof(bufData));
-						while(NET_GetTcpPacket(conn, &netmsg, qtrue));
-						Com_TcpPacketEvent(&conn->remote, &netmsg, &conn->sock, conn->connectionId, conn->serviceId);
+						cursize = 0;
+						do{
+                                                        ret = NET_GetTcpPacket(conn, bufData + cursize, sizeof(bufData) - cursize, qtrue);
+                                                        cursize += ret;
+                                                        if(ret < 1)
+                                                            break;
+                                                        else
+                                                            cursize += ret;
+
+                                                }while(cursize < sizeof(bufData));
+
+						if(cursize >= sizeof(bufData))
+						{
+							Com_PrintWarning( "Oversize packet from %s\n", NET_AdrToString (&conn->remote));
+							cursize = sizeof(bufData);
+						}
+						TCP_PacketEvent(&conn->remote, bufData, cursize, &conn->sock, conn->connectionId, conn->serviceId);
 						break;
 					}
 
-				}else if(conn->lastMsgTime && conn->state < TCP_AUTHSUCCESSFULL && conn->lastMsgTime + MAX_TCPAUTHWAITTIME < com_uFrameTime){
+				}else if(conn->lastMsgTime && conn->state < TCP_AUTHSUCCESSFULL && conn->lastMsgTime + MAX_TCPAUTHWAITTIME < NET_TimeGetTime()){
 					closesocket(conn->sock);
 					conn->lastMsgTime = 0;
 					FD_CLR(conn->sock, &tcpServer.fdr);
@@ -2255,20 +2320,20 @@ void NET_OpenTcpConnection(netadr_t *from, int newfd){
 
 	if(i == MAX_TCPCONNECTIONS)
 	{
-		if(tcpServer.activeConnectionCount > MAX_TCPCONNECTIONS / 3 && oldestTimeAccepted + MAX_TCPCONNECTEDTIMEOUT < com_uFrameTime){
+		if(tcpServer.activeConnectionCount > MAX_TCPCONNECTIONS / 3 && oldestTimeAccepted + MAX_TCPCONNECTEDTIMEOUT < NET_TimeGetTime()){
 				conn = &tcpServer.connections[oldestAccepted];
 				tcpServer.activeConnectionCount--; //As this connection is going to be closed decrease the counter
-				Com_TcpConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
+				TCP_ConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
 
-		}else if(oldestTime + MIN_TCPAUTHWAITTIME < com_uFrameTime){
+		}else if(oldestTime + MIN_TCPAUTHWAITTIME < NET_TimeGetTime()){
 				conn = &tcpServer.connections[oldest];
 
 		}else{
 			closesocket(newfd); //We have already too many open connections. Not possible to open more. Possible attack
 
-			if(tcpServer.lastAttackWarnTime + 300000 < com_uFrameTime)
+			if(tcpServer.lastAttackWarnTime + MIN_TCPAUTHWAITTIME < NET_TimeGetTime())
 			{
-				tcpServer.lastAttackWarnTime = com_uFrameTime;
+				tcpServer.lastAttackWarnTime = NET_TimeGetTime();
 				Com_PrintWarning("Possible Denial of Service Attack, Dropping connectrequest from: %s\n", NET_AdrToString(from));
 			}
 			return;
@@ -2283,7 +2348,7 @@ void NET_OpenTcpConnection(netadr_t *from, int newfd){
 
 	conn->sock = newfd;
 	conn->remote = *from;
-	conn->lastMsgTime = com_uFrameTime;
+	conn->lastMsgTime = NET_TimeGetTime();
 	conn->state = TCP_AUTHWAIT;
 	conn->serviceId = -1;
 	conn->connectionId = -1;
@@ -2310,34 +2375,23 @@ __optimize3 __regparm1 qboolean NET_Event(int socket)
 {
 	byte bufData[MAX_MSGLEN + 1];
 	netadr_t from;
-	msg_t netmsg;
-	int i;
-	qboolean noProcess;
+	int i, len;
 
 	//Give the system a possibility to abort processing network packets so it won't block execution of frames if the network getting flooded
 	for(i = 0; i < MAX_NETPACKETS; i++)
 	{
-		MSG_Init(&netmsg, bufData, sizeof(bufData));
 
-		if(NET_GetPacket(&from, &netmsg, socket))
+		if((len = NET_GetPacket(&from, bufData, sizeof(bufData), socket)) > 0)
 		{
 			if(net_dropsim->value > 0 && net_dropsim->value <= 100)
 			{
 				// com_dropsim->value percent of incoming packets get dropped.
 				if(rand() % 101 <= net_dropsim->value)
 					continue;          // drop this packet
-                        }
-
-			if(com_sv_running->boolean){
-
-				noProcess = qfalse;
-
-				Plugin_Event(PLUGINS_ONUDPNETEVENT, &from, netmsg.data, netmsg.cursize, &noProcess);
-
-				if(!noProcess)
-					SV_PacketEvent(&from, &netmsg);
-
 			}
+
+			UDP_PacketEvent(&from, bufData, len);
+
 				//Com_RunAndTimeServerPacket(&from, &netmsg);
 			//else
 			//	CL_PacketEvent(from, &netmsg);
@@ -2351,17 +2405,13 @@ __optimize3 __regparm1 qboolean NET_Event(int socket)
 
 __optimize3 __regparm1 qboolean NET_TCPConnectEvent(fd_set *fdr)
 {
-	byte bufData[MAX_MSGLEN + 1];
 	netadr_t from;
-	msg_t netmsg;
 	int newtcpfd;
 	int i;
 
 	//Give the system a possibility to abort processing network packets so it won't block execution of frames if the network getting flooded
 	for(i = 0; i < MAX_NETPACKETS; i++)
 	{
-		MSG_Init(&netmsg, bufData, sizeof(bufData));
-
 		if(NET_TcpConnectionRequest(&from, &newtcpfd, fdr)){
 
 			NET_OpenTcpConnection(&from, newtcpfd);
@@ -2639,10 +2689,6 @@ qboolean NET_TcpSendData( int *sock, const void *data, int length ) {
 
 	int state;
 
-	if ( showpackets->boolean) {
-		Com_PrintNoRedirect("send packet %6i\n", length);
-	}
-
 	do
 	{
 		state = Sys_SendPacketToSocket( length, data, sock );
@@ -2807,14 +2853,73 @@ void NET_TcpCloseConnection( SOCKET *sock ) {
 }
 
 
-
 /*
-void NET_Sockinfo_f(){
+=============
+NET_StringToAdr
 
-    int i;
-    for(i = 0; i < numIP; i++)
-    {
-        Com_Printf("%d    %s\n", ip_socket[i].sock, NET_AdrToString(&ip_socket[i]));
-    }
+Traps "localhost" for loopback, passes everything else to system
+return 0 on address not found, 1 on address found with port, 2 on address found without port.
+=============
+*/
+int NET_StringToAdr( const char *s, netadr_t *a, netadrtype_t family )
+{
+	char	base[MAX_STRING_CHARS], *search;
+	char	*port = NULL;
 
-}*/
+	if (!strcmp (s, "localhost")) {
+		Com_Memset (a, 0, sizeof(*a));
+		a->type = NA_LOOPBACK;
+// as NA_LOOPBACK doesn't require ports report port was given.
+		return 1;
+	}
+
+	Q_strncpyz( base, s, sizeof( base ) );
+	
+	if(*base == '[' || Q_CountChar(base, ':') > 1)
+	{
+		// This is an ipv6 address, handle it specially.
+		search = strchr(base, ']');
+		if(search)
+		{
+			*search = '\0';
+			search++;
+
+			if(*search == ':')
+				port = search + 1;
+		}
+		
+		if(*base == '[')
+			search = base + 1;
+		else
+			search = base;
+	}
+	else
+	{
+		// look for a port number
+		port = strchr( base, ':' );
+		
+		if ( port ) {
+			*port = '\0';
+			port++;
+		}
+		
+		search = base;
+	}
+
+	if(!Sys_StringToAdr(search, a, family))
+	{
+		a->type = NA_BAD;
+		return 0;
+	}
+
+	if(port)
+	{
+		a->port = BigShort((short) atoi(port));
+		return 1;
+	}
+	else
+	{
+		a->port = BigShort(PORT_SERVER);
+		return 2;
+	}
+}

@@ -46,7 +46,6 @@
 #define MAX_ZPATH	256
 #define	MAX_SEARCH_PATHS	4096
 #define MAX_FILEHASH_SIZE	1024
-#define PATH_SEP '/'
 //#define MAX_OSPATH 256
 #define MAX_FILE_HANDLES 48
 
@@ -82,11 +81,11 @@ typedef struct {	//Verified
 	char			pakBasename[MAX_OSPATH];	// pak0
 	char			pakGamename[MAX_OSPATH];	// baseq3
 	unzFile			handle;						// handle to zip file +0x300
-	int				checksum;					// regular checksum
-	int				pure_checksum;				// checksum for pure
-	int				numfiles;					// number of files in pk3
-	int				referenced;					// referenced file flags
-	int				hashSize;					// hash table size (power of 2)		+0x318
+	int			checksum;					// regular checksum
+	int			pure_checksum;				// checksum for pure
+	int			numfiles;					// number of files in pk3
+	int			referenced;					// referenced file flags
+	int			hashSize;					// hash table size (power of 2)		+0x318
 	fileInPack_t*	*hashTable;					// hash table	+0x31c
 	fileInPack_t*	buildBuffer;				// buffer with the filenames etc. +0x320
 } pack_t;
@@ -194,6 +193,15 @@ int FS_Seek( fileHandle_t f, long offset, int origin );
 DLL_PUBLIC __cdecl const char* FS_GetBasepath();
 qboolean FS_VerifyPak( const char *pak );
 void	FS_ForceFlush( fileHandle_t f );
+void	FS_CloseLogFiles(void);
+void __cdecl FS_InitFilesystem(void);
+void __cdecl FS_Shutdown(qboolean);
+void __cdecl FS_ShutdownIwdPureCheckReferences(void);
+void __cdecl FS_ShutdownServerIwdNames(void);
+void __cdecl FS_ShutdownServerReferencedIwds(void);
+void __cdecl FS_ShutdownServerReferencedFFs(void);
+const char* __cdecl FS_LoadedIwdPureChecksums(void);
+char* __cdecl FS_GetMapBaseName( const char* mapname );
+
 
 #endif
-
