@@ -1,47 +1,11 @@
-typedef jmp_buf* (__cdecl *tSys_GetValue)( int );
-tSys_GetValue Sys_GetValue = (tSys_GetValue)(0x8140e9c);
-
-typedef void (__cdecl *tSL_Init)(void);
-tSL_Init SL_Init = (tSL_Init)(0x8150928);
-
-typedef void (__cdecl *tSwap_Init)(void);
-tSwap_Init Swap_Init = (tSwap_Init)(0x81aa7b6);
-
-typedef void (__cdecl *tCSS_InitConstantConfigStrings)(void);
-tCSS_InitConstantConfigStrings CSS_InitConstantConfigStrings = (tCSS_InitConstantConfigStrings)(0x8185a72);
-
-typedef void (__cdecl *tMem_Init)(void);
-tMem_Init Mem_Init = (tMem_Init)(0x81a75e6);
-
-typedef void (__cdecl *tDB_SetInitializing)(qboolean);
-tDB_SetInitializing DB_SetInitializing = (tDB_SetInitializing)(0x820337c);
-
-typedef byte (__cdecl *tDB_FileExists)(const char* filename, int mode);
-tDB_FileExists DB_FileExists = (tDB_FileExists)(0x8204424);
-
-typedef void (__cdecl *tMem_BeginAlloc)(const char*, qboolean);
-tMem_BeginAlloc Mem_BeginAlloc = (tMem_BeginAlloc)(0x81a74d0);
-
-typedef void (__cdecl *tCon_InitChannels)(void);
-tCon_InitChannels Con_InitChannels = (tCon_InitChannels)(0x82096be);
-
 typedef void (__cdecl *tLiveStorage_Init)(void);
 tLiveStorage_Init LiveStorage_Init = (tLiveStorage_Init)(0x81d77ce);
-
-typedef void (__cdecl *tSEH_UpdateLanguageInfo)(void);
-tSEH_UpdateLanguageInfo SEH_UpdateLanguageInfo = (tSEH_UpdateLanguageInfo)(0x8180432);
 
 typedef void (__cdecl *tSV_StringUsage_f)(void);
 tSV_StringUsage_f SV_StringUsage_f = (tSV_StringUsage_f)(0x814cc7e);
 
 typedef void (__cdecl *tSV_ScriptUsage_f)(void);
 tSV_ScriptUsage_f SV_ScriptUsage_f = (tSV_ScriptUsage_f)(0x81557c4);
-
-typedef void (__cdecl *tSys_Init)(void);
-tSys_Init Sys_Init = (tSys_Init)(0x81d4f04);
-
-typedef void (__cdecl *tSetAnimCheck)(int);
-tSetAnimCheck SetAnimCheck = (tSetAnimCheck)(0x81423f0);
 
 /*
 //Netchan and MSG
@@ -140,12 +104,6 @@ tSV_InitCvars SV_InitCvars = (tSV_InitCvars)(0x819e66c);
 typedef void (__cdecl *tSV_RestartGameProgs)( int savepersist );
 tSV_RestartGameProgs SV_RestartGameProgs = (tSV_RestartGameProgs)(0x817c68a);
 
-typedef void (__cdecl *tXAnimInit)(void);
-tXAnimInit XAnimInit = (tXAnimInit)(0x81b649c);
-
-typedef void (__cdecl *tDObjInit)(void);
-tDObjInit DObjInit = (tDObjInit)(0x81acb00);
-
 typedef void (__cdecl *tSV_ResetSekeletonCache)(void);
 tSV_ResetSekeletonCache SV_ResetSekeletonCache = (tSV_ResetSekeletonCache)(0x817c602);
 
@@ -154,24 +112,6 @@ tSV_PreFrame SV_PreFrame = (tSV_PreFrame)(0x8177534);
 
 typedef void (__cdecl *tSV_SendClientMessages)(void);
 tSV_SendClientMessages SV_SendClientMessages = (tSV_SendClientMessages)(0x817b71e);
-
-typedef qboolean (__cdecl *tDB_ModFileExists)(void);
-tDB_ModFileExists DB_ModFileExists = (tDB_ModFileExists)(0x8204470);
-
-typedef void (__cdecl *tDB_LoadXAssets)(XZoneInfo*, unsigned int assetscount, int);
-tDB_LoadXAssets DB_LoadXAssets = (tDB_LoadXAssets)(0x8205e86);
-
-typedef int (__cdecl *tDB_GetXAssetTypeSize)(int type);
-tDB_GetXAssetTypeSize DB_GetXAssetTypeSize = (tDB_GetXAssetTypeSize)(0x81da6ce);
-
-typedef void (__cdecl *tMem_EndAlloc)(const char*, int);
-tMem_EndAlloc Mem_EndAlloc = (tMem_EndAlloc)(0x81a750a);
-
-typedef void (__cdecl *tSys_EnterCriticalSection)(int);
-tSys_EnterCriticalSection Sys_EnterCriticalSection = (tSys_EnterCriticalSection)(0x81d6be4);
-
-typedef void (__cdecl *tSys_LeaveCriticalSection)(int);
-tSys_LeaveCriticalSection Sys_LeaveCriticalSection = (tSys_LeaveCriticalSection)(0x81d6bc8);
 
 /*
 typedef void (__cdecl *tSV_Shutdown)(const char* reason);
@@ -257,9 +197,6 @@ tClientConnect ClientConnect = (tClientConnect)(0x80a83d4);
 typedef void (__regparm3 *tG_SayTo)(gentity_t *ent, gentity_t *other, int mode, int color, const char* teamname, const char* name, const char *message);
 tG_SayTo G_SayTo = (tG_SayTo)(0x80ae6f4);
 
-typedef qboolean (__cdecl *tBG_IsWeaponValid)( playerState_t *ps, unsigned int index);
-tBG_IsWeaponValid BG_IsWeaponValid = (tBG_IsWeaponValid)(0x805f4fe);
-
 /*typedef cvar_t* (__cdecl *tCvar_SetBool)(cvar_bool_t *var_name,int var_value);
 tCvar_SetBool Cvar_SetBool = (tCvar_SetBool)(0x81a20c4); Does not work like expected !
 */
@@ -271,21 +208,6 @@ tClientBegin ClientBegin = (tClientBegin)(0x80a7700);
 
 typedef void (__cdecl *tMSG_WriteReliableCommandToBuffer)( const char* source, char* destination,int length);
 tMSG_WriteReliableCommandToBuffer MSG_WriteReliableCommandToBuffer = (tMSG_WriteReliableCommandToBuffer)(0x813e162);
-
-typedef qboolean (__cdecl *tSEH_StringEd_GetString)( const char* input );
-tSEH_StringEd_GetString SEH_StringEd_GetString = (tSEH_StringEd_GetString)(0x817fbe0);
-
-
-typedef qboolean (__cdecl *tCM_TraceBox)(const float*, const float*, const float*, float);
-tCM_TraceBox CM_TraceBox = (tCM_TraceBox)(0x811a5a2);
-
-typedef clipHandle_t (__cdecl *tCM_TempBoxModel)(const float* mins, const float* maxs, int capsule);
-tCM_TempBoxModel CM_TempBoxModel = (tCM_TempBoxModel)(0x811c442);
-
-typedef void (__cdecl *tCM_TransformedBoxTrace)(trace_t* trace, const float* start, const float* end, const float* mins, const float* maxs,
-			clipHandle_t cliphandle, int contentmask, const float* origin, const float* angle);
-tCM_TransformedBoxTrace CM_TransformedBoxTrace = (tCM_TransformedBoxTrace)(0x811e3c2);
-
 
 /*
 typedef void (__cdecl *tHuff_offsetReceive)( node_t *node, int *ch, byte *fin, int *offset );

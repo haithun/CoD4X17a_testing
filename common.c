@@ -1,491 +1,38 @@
-#define	MAX_CONSOLE_LINES	32
+#include "q_shared.h"
+#include "qcommon_io.h"
+#include "qcommon_parsecmdline.h"
+#include "sys_cod4defs.h"
+#include "cvar.h"
+#include "filesystem.h"
+#include "qcommon_mem.h"
+#include "q_platform.h"
+#include "sys_main.h"
+#include "sys_thread.h"
+#include "qcommon.h"
+#include "cmd.h"
+#include "sys_net.h"
+#include "xassets.h"
+#include "plugin_events.h"
+#include "misc.h"
 
-#define cvar_modifiedFlags_ADDR 0x1402c060
-#define com_codeTimeScale_ADDR 0x88a7238
-#define com_frameTime_ADDR 0x88a61e0
-#define com_lastError_ADDR 0x88a6220
-#define com_errorEntered_ADDR 0x88a61f4
-#define com_numConsoleLines_ADDR 0x88a7360
-#define logfile_ADDR 0x88a6210
-#define level_ADDR 0x8370440
+#include <string.h>
+#include <setjmp.h>
+#include <stdarg.h>
+#include <time.h>
 
+#include "common_adrdefs.h"
 
-#define level (*((level_locals_t*)(level_ADDR)))
-#define com_errorEntered *((qboolean*)(com_errorEntered_ADDR))
-#define com_frameTime *((unsigned int*)(com_frameTime_ADDR))
-#define com_codeTimeScale *((int*)(com_codeTimeScale_ADDR))
-#define cvar_modifiedFlags *((int*)(cvar_modifiedFlags_ADDR))
-#define com_lastError ((char*)com_lastError_ADDR)
 
 jmp_buf		*abortframe;
-int		com_numConsoleLines;
-int		com_frameNumber;
-char		*com_consoleLines[MAX_CONSOLE_LINES];
-fileHandle_t	logfile;
-fileHandle_t	adminlogfile;
-fileHandle_t	enterleavelogfile;
-fileHandle_t	reliabledump;
-
-
 unsigned long long com_uFrameTime = 0;
-
-qboolean	loadconfigfiles; //Needed for adminlogfile to omit logging of some actions while configfiles are loaded
 
 cvar_t* com_version;
 cvar_t* com_shortversion;
 cvar_t* com_dedicated;
-cvar_t* com_ansiColor;
 cvar_t* com_timescale;
 cvar_t* com_fixedtime;
 cvar_t* com_maxFrameTime;
 cvar_t* com_animCheck;
-
-
-//============================================================================
-
-static char	*rd_buffer;
-static int	rd_buffersize;
-static void	(*rd_flush)( char *buffer, qboolean );
-
-
-typedef enum{
-    MSG_DEFAULT,
-    MSG_NA,	//Not defined
-    MSG_WARNING,
-    MSG_ERROR,
-    MSG_NORDPRINT
-}msgtype_t;
-
-
-void Com_BeginRedirect (char *buffer, int buffersize, void (*flush)( char *, qboolean) )
-{
-	if (!buffer || !buffersize || !flush)
-		return;
-	rd_buffer = buffer;
-	rd_buffersize = buffersize;
-	rd_flush = flush;
-
-	*rd_buffer = 0;
-}
-
-void Com_EndRedirect (void)
-{
-	if ( rd_flush ) {
-		rd_flush(rd_buffer, qtrue);
-	}
-
-	rd_buffer = NULL;
-	rd_buffersize = 0;
-	rd_flush = NULL;
-}
-
-void Com_StopRedirect (void)
-{
-	rd_flush = NULL;
-}
-
-DLL_PUBLIC __cdecl void Com_PrintMessage( int dumbIWvar, char *msg, msgtype_t type) {
-
-	PbCapatureConsoleOutput(msg, MAXPRINTMSG);
-	if(dumbIWvar == 6) return;
-
-	int msglen = strlen(msg);
-
-	Sys_EnterCriticalSection(5);
-
-	if ( type != MSG_NORDPRINT) {
-		HL2Rcon_SourceRconSendConsole( msg, msglen);
-
-		Com_PrintUDP( msg, msglen );
-
-		if ( rd_buffer ) {
-			if(!rd_flush){
-				Sys_LeaveCriticalSection(5);
-				return;
-			}
-			if ((msglen + strlen(rd_buffer)) > (rd_buffersize - 1)) {
-				rd_flush(rd_buffer, qfalse);
-				*rd_buffer = 0;
-			}
-			Q_strcat(rd_buffer, rd_buffersize, msg);
-	                // TTimo nooo .. that would defeat the purpose
-			//rd_flush(rd_buffer);
-			//*rd_buffer = 0;
-			Sys_LeaveCriticalSection(5);
-			return;
-		}
-	}
-	// echo to dedicated console and early console
-	Sys_Print( msg );
-
-	// logfile
-
-	if ( com_logfile && com_logfile->integer ) {
-        // TTimo: only open the qconsole.log if the filesystem is in an initialized state
-        // also, avoid recursing in the qconsole.log opening (i.e. if fs_debug is on)
-	    if ( !logfile && FS_Initialized()) {
-			struct tm *newtime;
-			time_t aclock;
-
-			time( &aclock );
-			newtime = localtime( &aclock );
-
-			logfile = FS_FOpenFileWrite( "qconsole.log" );
-
-			if ( com_logfile->integer > 1 && logfile ) {
-				// force it to not buffer so we get valid
-				// data even if we are crashing
-				FS_ForceFlush(logfile);
-			}
-			if ( logfile ) FS_Write(va("\nLogfile opened on %s\n", asctime( newtime )), strlen(va("\nLogfile opened on %s\n", asctime( newtime ))), logfile);
-	    }
-	    if ( logfile && FS_Initialized()) {
-	    	FS_Write(msg, msglen, logfile);
-	    }
-	}
-	Sys_LeaveCriticalSection(5);
-}
-
-/*
-=============
-Com_Printf
-
-Both client and server can use this, and it will output
-to the apropriate place.
-
-A raw string should NEVER be passed as fmt, because of "%f" type crashers.
-=============
-*/
-void QDECL Com_Printf( const char *fmt, ... ) {
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-
-	va_start (argptr,fmt);
-	Q_vsnprintf (msg, sizeof(msg), fmt, argptr);
-	va_end (argptr);
-
-        Com_PrintMessage( 0, msg, MSG_DEFAULT);
-}
-
-
-/*
-=============
-Com_PrintfNoRedirect
-
-This will not print to rcon
-
-A raw string should NEVER be passed as fmt, because of "%f" type crashers.
-=============
-*/
-void QDECL Com_PrintNoRedirect( const char *fmt, ... ) {
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-
-	va_start (argptr,fmt);
-	Q_vsnprintf (msg, sizeof(msg), fmt, argptr);
-	va_end (argptr);
-
-        Com_PrintMessage( 0, msg, MSG_NORDPRINT);
-}
-
-
-/*
-=============
-Com_PrintWarning
-
-Server can use this, and it will output
-to the apropriate place.
-
-A raw string should NEVER be passed as fmt, because of "%f" type crashers.
-=============
-*/
-void QDECL Com_PrintWarning( const char *fmt, ... ) {
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-
-	memcpy(msg,"^3Warning: ", sizeof(msg));
-
-	va_start (argptr,fmt);
-	Q_vsnprintf (&msg[11], (sizeof(msg)-12), fmt, argptr);
-	va_end (argptr);
-
-        Com_PrintMessage( 0, msg, MSG_WARNING);
-}
-
-
-/*
-=============
-Com_PrintWarningNoRedirect
-
-Server can use this, and it will output
-to the apropriate place.
-
-A raw string should NEVER be passed as fmt, because of "%f" type crashers.
-=============
-*/
-void QDECL Com_PrintWarningNoRedirect( const char *fmt, ... ) {
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-
-	memcpy(msg,"^3Warning: ", sizeof(msg));
-
-	va_start (argptr,fmt);
-	Q_vsnprintf (&msg[11], (sizeof(msg)-12), fmt, argptr);
-	va_end (argptr);
-
-        Com_PrintMessage( 0, msg, MSG_NORDPRINT);
-}
-
-
-/*
-=============
-Com_PrintError
-
-Server can use this, and it will output
-to the apropriate place.
-
-A raw string should NEVER be passed as fmt, because of "%f" type crashers.
-=============
-*/
-void QDECL Com_PrintError( const char *fmt, ... ) {
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-
-	memcpy(msg,"^1Error: ", sizeof(msg));
-
-	va_start (argptr,fmt);
-	Q_vsnprintf (&msg[9], (sizeof(msg)-10), fmt, argptr);
-	va_end (argptr);
-
-        Com_PrintMessage( 0, msg, MSG_ERROR);
-}
-
-/*
-================
-Com_DPrintf
-
-A Com_Printf that only shows up if the "developer" cvar is set
-================
-*/
-void QDECL Com_DPrintf( const char *fmt, ...) {
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-		
-	if ( !com_developer || !com_developer->integer ) {
-		return;			// don't confuse non-developers with techie stuff...
-	}
-	
-	msg[0] = '^';
-	msg[1] = '2';
-
-	va_start (argptr,fmt);	
-	Q_vsnprintf (&msg[2], (sizeof(msg)-3), fmt, argptr);
-	va_end (argptr);
-
-        Com_PrintMessage( 0, msg, MSG_DEFAULT);
-}
-
-
-void QDECL Com_DPrintfWrapper( int drop, const char *fmt, ...) {
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-		
-	if ( !com_developer || !com_developer->integer ) {
-		return;			// don't confuse non-developers with techie stuff...
-	}
-	
-	msg[0] = '^';
-	msg[1] = '2';
-
-	va_start (argptr,fmt);	
-	Q_vsnprintf (&msg[2], (sizeof(msg)-3), fmt, argptr);
-	va_end (argptr);
-
-        Com_PrintMessage( 0, msg, MSG_DEFAULT);
-}
-
-/*
-================
-Com_DPrintNoRedirect
-
-A Com_Printf that only shows up if the "developer" cvar is set
-This will not print to rcon
-================
-*/
-void QDECL Com_DPrintNoRedirect( const char *fmt, ... ) {
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-
-	if ( !com_developer || !com_developer->integer ) {
-		return;			// don't confuse non-developers with techie stuff...
-	}
-	
-	msg[0] = '^';
-	msg[1] = '2';
-
-	va_start (argptr,fmt);	
-	Q_vsnprintf (&msg[2], (sizeof(msg)-3), fmt, argptr);
-	va_end (argptr);
-
-        Com_PrintMessage( 0, msg, MSG_NORDPRINT);
-}
-
-
-
-/*
-========================================================================
-
-UDP logging facility
-
-========================================================================
-*/
-
-#define MAX_LOGADDRESSES 8
-
-netadr_t com_logaddresses[MAX_LOGADDRESSES];
-
-
-
-static void Com_LogStreaming_f( void ){
-
-	if(Cmd_Argc() < 2){
-
-		if(com_logfile->integer)
-			Com_Printf("Usage:  log < on | off >\ncurrently logging to: file, console\n");
-		else
-			Com_Printf("Usage:  log < on | off >\ncurrently logging to: console\n");
-	}
-
-}
-
-static void Com_SetLogAddress_f( void ){
-
-	int i;
-	netadr_t *adr;
-	netadr_t *freeadr = NULL;
-	netadr_t adrtoadd;
-
-	if(Cmd_Argc() < 2 || NET_StringToAdr(Cmd_Argv(1), &adrtoadd, NA_UNSPEC) != 1){
-		Com_Printf("Usage:  logaddress_add < address:port >\n");
-		return;
-	}
-
-	for(i = 0, adr = com_logaddresses ; i < MAX_LOGADDRESSES; i++, adr++)
-	{
-		if(NET_CompareAdr(adr, &adrtoadd)){
-			Com_Printf("logaddress_add:    This address exists already added\n");
-			return;
-		}
-
-		if(!freeadr && adr->type == NA_BAD){
-			freeadr = adr;
-		}
-	}
-	if(!freeadr){
-		Com_Printf("logaddress_add:  Too many logaddresses. Limit is 8\n");
-		return;
-	}
-	*freeadr = adrtoadd;
-	Com_Printf("logaddress_add:  %s\n", NET_AdrToString(&adrtoadd));
-}
-
-
-static void Com_RemoveLogAddress_f( void ){
-
-	int i;
-	netadr_t *adr;
-	netadr_t adrtodel;
-
-	if(Cmd_Argc() < 2 || NET_StringToAdr(Cmd_Argv(1), &adrtodel, NA_UNSPEC) != 1){
-		Com_Printf("Usage:  logaddress_del < address:port >\n");
-	}
-
-
-	for(i = 0, adr = com_logaddresses ; i < MAX_LOGADDRESSES; i++, adr++)
-	{
-		if(adr->type == NA_BAD)
-			continue;
-
-		if(NET_CompareAdr(adr, &adrtodel)){
-			adr->type = NA_BAD;
-			Com_Printf("logaddress_del:  %s\n", NET_AdrToString(&adrtodel));
-			return;
-		}
-	}
-	Com_Printf("logaddress_del:  No such address\n");
-}
-
-
-static void Com_RemoveAllLogAddresses_f( void ){
-
-	int i, j;
-	netadr_t *adr;
-
-	Com_Printf("logaddress_delall:\n");
-
-	for(i = 0, j = 0, adr = com_logaddresses ; i < MAX_LOGADDRESSES; i++, adr++)
-	{
-		if(adr->type == NA_BAD)
-			continue;
-
-		j++;
-		Com_Printf("%d:    %s\n", j, NET_AdrToString(adr));
-		adr->type = NA_BAD;
-	}
-	Com_Printf("------------------\n");
-}
-
-
-static void Com_ListAllLogAddresses_f( void ){
-
-	int i, j;
-	netadr_t *adr;
-
-	Com_Printf("logaddress_list:\n");
-
-	for(i = 0, j = 0, adr = com_logaddresses ; i < MAX_LOGADDRESSES; i++, adr++)
-	{
-		if(adr->type == NA_BAD)
-			continue;
-
-		j++;
-		Com_Printf("%d:    %s\n", j, NET_AdrToString(adr));
-	}
-	Com_Printf("------------------\n");
-}
-
-
-void Com_AddLoggingCommands(){
-
-	static qboolean	initialized;
-
-	if ( initialized ) {
-		return;
-	}
-	initialized = qtrue;
-
-	Cmd_AddCommand ("logaddress_delall", Com_RemoveAllLogAddresses_f);
-	Cmd_AddCommand ("logaddress_list", Com_ListAllLogAddresses_f);
-	Cmd_AddCommand ("logaddress_add", Com_SetLogAddress_f);
-	Cmd_AddCommand ("logaddress_del", Com_RemoveLogAddress_f);
-	Cmd_AddCommand ("log", Com_LogStreaming_f);
-}
-
-
-void Com_PrintUDP( const char* msg, int len ){
-
-	int i;
-	netadr_t *adr;
-
-	for(i = 0, adr = com_logaddresses ; i < MAX_LOGADDRESSES; i++, adr++)
-	{
-		if(adr->type == NA_BAD)
-			continue;
-
-		NET_OutOfBandData(NS_SERVER, adr, (byte*)msg, len);
-	}
-}
-
 
 
 /*
@@ -495,6 +42,32 @@ EVENT LOOP
 
 ========================================================================
 */
+
+
+typedef union{
+    float f;
+    char c;
+    int i;
+    qboolean b;
+    byte by;
+    void* p;
+}universalArg_t;
+
+
+typedef enum {
+	// bk001129 - make sure SE_NONE is zero
+	SE_NONE = 0,    // evTime is still valid
+	SE_CONSOLE, // evPtr is a char*
+	SE_PACKET   // evPtr is a netadr_t followed by data bytes to evPtrLength
+} sysEventType_t;
+
+typedef struct {
+	int evTime;
+	sysEventType_t evType;
+	int evValue, evValue2;
+	int evPtrLength;                // bytes of data pointed to by evPtr, for journaling
+	void            *evPtr;         // this must be manually freed if not NULL
+} sysEvent_t;
 
 
 #define MAX_TIMEDEVENTARGS 8
@@ -633,9 +206,6 @@ void Com_InitEventQueue()
     // bk000306 - clear eventqueue
     memset( eventQueue, 0, MAX_QUEUED_EVENTS * sizeof( sysEvent_t ) );
 }
-
-
-
 
 /*
 ================
@@ -906,108 +476,6 @@ int Com_HashKey( char *string, int maxlen ) {
 
 
 /*
-===============
-Com_StartupVariable
-
-Searches for command line parameters that are set commands.
-If match is not NULL, only that cvar will be looked for.
-That is necessary because cddir and basedir need to be set
-before the filesystem is started, but all other sets should
-be after execing the config and default.
-===============
-*/
-void Com_StartupVariable( const char *match ) {
-	int		i;
-	for (i=0 ; i < com_numConsoleLines ; i++) {
-		Cmd_TokenizeString( com_consoleLines[i] );
-
-		if(!match || !strcmp(Cmd_Argv(1), match))
-		{
-			if ( !strcmp( Cmd_Argv(0), "set" )){
-				Cvar_Set_f();
-				Cmd_EndTokenizeString();
-				continue;
-			}else if( !strcmp( Cmd_Argv(0), "seta" ) ) {
-				Cvar_SetA_f();
-			}
-		}
-		Cmd_EndTokenizeString();
-	}
-}
-
-
-
-
-/*
-=================
-Com_AddStartupCommands
-
-Adds command line parameters as script statements
-Commands are seperated by + signs
-
-Returns qtrue if any late commands were added, which
-will keep the demoloop from immediately starting
-=================
-*/
-qboolean Com_AddStartupCommands( void ) {
-	int		i;
-	qboolean	added;
-	char		buf[1024];
-	added = qfalse;
-	// quote every token, so args with semicolons can work
-	for (i=0 ; i < com_numConsoleLines ; i++) {
-		if ( !com_consoleLines[i] || !com_consoleLines[i][0] ) {
-			continue;
-		}
-
-		// set commands already added with Com_StartupVariable
-		if ( !Q_stricmpn( com_consoleLines[i], "set", 3 )) {
-			continue;
-		}
-
-		added = qtrue;
-		Com_sprintf(buf,sizeof(buf),"%s\n",com_consoleLines[i]);
-		Cbuf_ExecuteBuffer( 0,0, buf);
-	}
-
-	return added;
-}
-
-
-
-/*
-==================
-Com_ParseCommandLine
-
-Break it up into multiple console lines
-==================
-*/
-void Com_ParseCommandLine( char *commandLine ) {
-    int inq = 0;
-    com_consoleLines[0] = commandLine;
-    com_numConsoleLines = 1;
-
-    while ( *commandLine ) {
-        if (*commandLine == '"') {
-            inq = !inq;
-        }
-        // look for a + seperating character
-        // if commandLine came from a file, we might have real line seperators
-        if ( (*commandLine == '+' && !inq) || *commandLine == '\n'  || *commandLine == '\r' ) {
-            if ( com_numConsoleLines == MAX_CONSOLE_LINES ) {
-                return;
-            }
-            com_consoleLines[com_numConsoleLines] = commandLine + 1;
-            com_numConsoleLines = (com_numConsoleLines)+1;
-            *commandLine = 0;
-        }
-        commandLine++;
-    }
-}
-
-
-
-/*
 =============
 Com_Quit_f
 
@@ -1034,10 +502,7 @@ void Com_Quit_f( void ) {
 
 		Com_Close();
 
-		if(logfile) FS_FCloseFile(logfile);
-		if(adminlogfile) FS_FCloseFile(adminlogfile);
-		if(enterleavelogfile) FS_FCloseFile(enterleavelogfile);
-		if(reliabledump) FS_FCloseFile(reliabledump);
+		FS_CloseLogFiles( );
 
 		FS_Shutdown(qtrue);
 		FS_ShutdownIwdPureCheckReferences();
@@ -1068,7 +533,6 @@ void Com_InitCvars( void ){
 
 
     Cvar_RegisterString ("build", va("%i", BUILD_NUMBER), CVAR_ROM | CVAR_SERVERINFO , "");
-    com_ansiColor = Cvar_RegisterBool ("ttycon_ansiColor", qtrue, CVAR_ARCHIVE , "Use AnsiColors");
 
     cvar_t** tmp;
     tmp = (cvar_t**)(0x88a6170);
@@ -1100,6 +564,8 @@ The games main initialization
 =================
 */
 
+
+
 void Com_Init(char* commandLine){
 
 
@@ -1114,7 +580,7 @@ void Com_Init(char* commandLine){
     }
     Com_Printf("%s %s %s build %i %s\n", GAME_STRING,Q3_VERSION,PLATFORM_STRING, BUILD_NUMBER, __DATE__);
 
-    patch_assets();  //Patch several asset-limits to higher values
+    XAssets_PatchLimits();  //Patch several asset-limits to higher values
 
     SL_Init();
 
@@ -1240,6 +706,8 @@ void Com_Init(char* commandLine){
 
     Sys_Init();
 
+    Com_UpdateRealtime();
+
     Com_RandomBytes( (byte*)&qport, sizeof(int) );
     Netchan_Init( qport );
 
@@ -1261,48 +729,16 @@ void Com_Init(char* commandLine){
 
     com_frameTime = Sys_Milliseconds();
 
-    if(useFastfiles->integer){
-        Mem_EndAlloc("$init", qtrue);
-        DB_SetInitializing( qfalse );
-        Com_Printf("end $init %d ms\n", Sys_Milliseconds() - msec);
+    Mem_EndAlloc("$init", qtrue);
+    DB_SetInitializing( qfalse );
+    Com_Printf("end $init %d ms\n", Sys_Milliseconds() - msec);
 
-        int XAssetscount;
-        XZoneInfo XZoneInfoStack[6];
-
-        XZoneInfoStack[4].fastfile = "localized_common_mp";
-        XZoneInfoStack[4].loadpriority = 1;
-        XZoneInfoStack[4].notknown = 0;
-        XZoneInfoStack[3].fastfile = "common_mp";
-        XZoneInfoStack[3].loadpriority = 4;
-        XZoneInfoStack[3].notknown = 0;
-        XZoneInfoStack[2].fastfile = "ui_mp";
-        XZoneInfoStack[2].loadpriority = 8;
-        XZoneInfoStack[2].notknown = 0;
-        XZoneInfoStack[1].fastfile = "localized_code_post_gfx_mp";
-        XZoneInfoStack[1].loadpriority = 0;
-        XZoneInfoStack[1].notknown = 0;
-        XZoneInfoStack[0].fastfile = "code_post_gfx_mp";
-        XZoneInfoStack[0].loadpriority = 2;
-        XZoneInfoStack[0].notknown = 0;
-
-        if(DB_ModFileExists()){
-            XAssetscount = 6;
-            XZoneInfoStack[5].fastfile = "mod";
-            XZoneInfoStack[5].loadpriority = 16;
-            XZoneInfoStack[5].notknown = 0;
-        }else{
-            XAssetscount = 5;
-        }
-        DB_LoadXAssets(&XZoneInfoStack[0],XAssetscount,0);
-    }
-
-
+    if(useFastfiles->integer)
+        R_Init();
 
     Com_DvarDump(6,0);
 
     NV_LoadConfig();
-
-    time(&realtime);
 
     Com_Printf("--- Common Initialization Complete ---\n");
 
@@ -1325,6 +761,7 @@ void Com_Init(char* commandLine){
 Com_ModifyUsec
 ================
 */
+
 unsigned int Com_ModifyUsec( unsigned int usec ) {
 	int		clampTime;
 
@@ -1368,6 +805,18 @@ unsigned int Com_ModifyUsec( unsigned int usec ) {
 	return usec;
 }
 
+static time_t realtime;
+
+time_t Com_GetRealtime()
+{
+	return realtime;
+}
+
+void Com_UpdateRealtime()
+{
+	time(&realtime);
+}
+
 /*
 =================
 Com_Frame
@@ -1375,8 +824,9 @@ Com_Frame
 */
 __optimize3 void Com_Frame( void ) {
 
-	unsigned int		usec;
-	unsigned long long	lastTime;
+	unsigned int			usec;
+	static unsigned long long	lastTime;
+	static unsigned int		com_frameNumber;
 
         abortframe = Sys_GetValue(2);
         if(setjmp(*abortframe)){
@@ -1439,30 +889,15 @@ __optimize3 void Com_Frame( void ) {
 	} while( timeVal );
 */
 
-	lastTime = com_uFrameTime;
-
-	struct timeval tp;
-	gettimeofday( &tp, NULL );
-
-	unsigned int diffseconds = tp.tv_sec - sys_timeBase;
-
-	com_frameTime = diffseconds * 1000 + tp.tv_usec / 1000;
-
-	unsigned long long orgtime = diffseconds;
-
-	com_uFrameTime =  orgtime << 19;
-	com_uFrameTime += orgtime << 18;
-	com_uFrameTime += orgtime << 17;
-	com_uFrameTime += orgtime << 16;
-	com_uFrameTime += orgtime << 14;
-	com_uFrameTime += orgtime << 9;
-	com_uFrameTime += orgtime << 6;
-	com_uFrameTime += (unsigned long long)tp.tv_usec;
+	com_frameTime = Sys_Milliseconds();
+	com_uFrameTime = Sys_Microseconds();
 
 	usec = com_uFrameTime - lastTime;
+	lastTime = com_uFrameTime;
 
 	// mess with msec if needed
 	usec = Com_ModifyUsec(usec);
+
 
 	//
 	// server side
@@ -1474,8 +909,6 @@ __optimize3 void Com_Frame( void ) {
 #endif
 	if(!SV_Frame( usec ))
 		return;
-
-	time(&realtime);
 
 	Plugin_Event(PLUGINS_ONFRAME);
 
@@ -1534,63 +967,10 @@ __optimize3 void Com_Frame( void ) {
 #endif
 	com_frameNumber++;
 
+	Com_UpdateRealtime();
+
         Sys_EnterCriticalSection(2);
         if(com_errorEntered)
             Com_ErrorCleanup();
         Sys_LeaveCriticalSection(2);
 }
-
-
-
-
-char* SL_ConvertToString(unsigned int index){
-
-    char** ptr = (char**)STRBUFFBASEPTR_ADDR;
-    char* base = *ptr;
-    return &base[ index*12 + 4];
-}
-
-
-
-/*
-=================
-Com_ReadTcpPackets
-=================
-*/
-__optimize3 __regparm3 tcpclientstate_t Com_TcpAuthPacketEvent( netadr_t *from, msg_t *msg, int *socketfd, int *connectionId, int *serviceId ){
-
-	tcpclientstate_t ret;
-
-	Com_DPrintf("Packet event from: %s\n", NET_AdrToString(from));
-
-	ret = HL2Rcon_SourceRconAuth(from, msg, socketfd, connectionId);
-	if(ret != TCP_AUTHNOTME){
-		*serviceId = 0x782a3;
-		return ret;
-	}
-
-	Com_DPrintf("^5Bad TCP-Packet from: %s\n", NET_AdrToString(from));
-	return TCP_AUTHBAD;
-}
-
-__optimize3 __regparm3 qboolean Com_TcpPacketEvent( netadr_t *from, msg_t *msg, int *socketfd, int connectionId, int serviceId ){
-
-	if(serviceId == 0x782a3){
-		return HL2Rcon_SourceRconEvent(from, msg, socketfd, connectionId);
-	}
-
-	Com_PrintError("Com_TcpPacketEvent: Bad serviceId: %d\n", serviceId);
-	return qtrue;
-
-}
-
-__optimize3 __regparm3 void Com_TcpConnectionClosed( netadr_t *from, int socketfd, int connectionId, int serviceId ){
-
-	if(serviceId == 0x782a3){
-		HL2Rcon_SourceRconDisconnect(from, socketfd, connectionId);
-		return;
-	}
-	Com_PrintError("Com_TcpConnectionClosed: Bad serviceId: %d\n", serviceId);
-}
-
-

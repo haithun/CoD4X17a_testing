@@ -208,6 +208,7 @@ or configs will never get loaded from disk!
 static fileHandle_t logfile;
 static fileHandle_t adminlogfile;
 static fileHandle_t debuglogfile;
+static fileHandle_t enterleavelogfile;
 
 /*
 typedef int (__cdecl *tFS_ReadFile)(const char* qpath, void **buffer);
@@ -1470,6 +1471,8 @@ void FS_CloseLogFiles()
 		FS_FCloseFile( logfile );
 	if(debuglogfile)
 		FS_FCloseFile( debuglogfile );
+	if(enterleavelogfile)
+		FS_FCloseFile( enterleavelogfile );
 }
 
 /*

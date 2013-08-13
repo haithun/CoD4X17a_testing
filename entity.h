@@ -197,3 +197,237 @@ typedef struct {
 	entityShared_t	r;				// shared by both the server system and game
 } sharedEntity_t;
 
+typedef struct gentity_s gentity_t;
+
+struct gentity_s {
+	entityState_t s;
+	entityShared_t r;               // shared by both the server system and game
+
+	// DO NOT MODIFY ANYTHING ABOVE THIS, THE SERVER
+	// EXPECTS THE FIELDS IN THAT ORDER!
+	//================================
+
+	struct gclient_s    *client;            // NULL if not a client		0x15c
+
+	qboolean inuse;
+
+	byte unknown[0x110]; //0x164
+
+
+/*
+	char        *classname;         // set in QuakeEd
+	int spawnflags;                 // set in QuakeEd
+
+	qboolean neverFree;             // if true, FreeEntity will only unlink
+									// bodyque uses this
+
+	int flags;                      // FL_* variables
+
+	char        *model;
+	char        *model2;
+	int freetime;                   // level.time when the object was freed
+
+	int eventTime;                  // events will be cleared EVENT_VALID_MSEC after set
+	qboolean freeAfterEvent;
+	qboolean unlinkAfterEvent;
+
+	qboolean physicsObject;         // if true, it can be pushed by movers and fall off edges
+									// all game items are physicsObjects,
+	float physicsBounce;            // 1.0 = continuous bounce, 0.0 = no bounce
+	int clipmask;                   // brushes with this content value will be collided against
+									// when moving.  items and corpses do not collide against
+									// players, for instance
+
+	// movers
+	moverState_t moverState;
+	int soundPos1;
+	int sound1to2;
+	int sound2to1;
+	int soundPos2;
+	int soundLoop;
+	// JOSEPH 1-26-00
+	int sound2to3;
+	int sound3to2;
+	int soundPos3;
+	// END JOSEPH
+
+	int soundKicked;
+	int soundKickedEnd;
+
+	int soundSoftopen;
+	int soundSoftendo;
+	int soundSoftclose;
+	int soundSoftendc;
+
+	gentity_t   *parent;
+	gentity_t   *nextTrain;
+	gentity_t   *prevTrain;
+	// JOSEPH 1-26-00
+	vec3_t pos1, pos2, pos3;
+	// END JOSEPH
+
+	char        *message;
+
+	int timestamp;              // body queue sinking, etc   //0x1bc
+
+	float angle;                // set in editor, -1 = up, -2 = down
+	char        *target;
+	char        *targetname;
+	char        *team;
+	char        *targetShaderName;
+	char        *targetShaderNewName;
+	gentity_t   *target_ent;
+
+	float speed;
+	float closespeed;           // for movers that close at a different speed than they open
+	vec3_t movedir;
+
+	int gDuration;
+	int gDurationBack;
+	vec3_t gDelta;
+	vec3_t gDeltaBack;
+
+	int nextthink;
+	void ( *think )( gentity_t *self );
+	void ( *reached )( gentity_t *self );       // movers call this when hitting endpoint
+	void ( *blocked )( gentity_t *self, gentity_t *other );
+	void ( *touch )( gentity_t *self, gentity_t *other, trace_t *trace );
+	void ( *use )( gentity_t *self, gentity_t *other, gentity_t *activator );
+	void ( *pain )( gentity_t *self, gentity_t *attacker, int damage, vec3_t point );
+	void ( *die )( gentity_t *self, gentity_t *inflictor, gentity_t *attacker, int damage, int mod );
+
+	int pain_debounce_time;
+	int fly_sound_debounce_time;            // wind tunnel
+	int last_move_time;
+
+	int health;		//0x1A0 ??
+
+	qboolean takedamage;	//0x16b
+
+	int damage;
+	int splashDamage;           // quad will increase this without increasing radius
+	int splashRadius;
+	int methodOfDeath;
+	int splashMethodOfDeath;
+
+	int count;
+
+	gentity_t   *chain;
+	gentity_t   *enemy;
+	gentity_t   *activator;
+	gentity_t   *teamchain;     // next entity in team
+	gentity_t   *teammaster;    // master of the team
+
+	int watertype;
+	int waterlevel;
+
+	int noise_index;
+
+	// timing variables
+	float wait;		//
+	float random;		//
+
+	// Rafael - sniper variable
+	// sniper uses delay, random, radius
+	int radius;
+	float delay;
+
+	// JOSEPH 10-11-99
+	int TargetFlag;
+	float duration;
+	vec3_t rotate;
+	vec3_t TargetAngles;
+	// END JOSEPH
+
+	gitem_t     *item;          // for bonus items
+
+	// Ridah, AI fields
+	char        *aiAttributes;
+	char        *aiName;
+	int aiTeam;
+	void ( *AIScript_AlertEntity )( gentity_t *ent );
+	qboolean aiInactive;
+	int aiCharacter;            // the index of the type of character we are (from aicast_soldier.c)
+	// done.
+
+	char        *aiSkin;
+	char        *aihSkin;
+
+	vec3_t dl_color;
+	char        *dl_stylestring;
+	char        *dl_shader;
+	int dl_atten;
+
+
+	int key;                    // used by:  target_speaker->nopvs,
+
+	qboolean active;	//0x16c
+	qboolean botDelayBegin;
+
+	// Rafael - mg42
+	float harc;
+	float varc;
+
+	int props_frame_state;
+
+	// Ridah
+	int missionLevel;               // mission we are currently trying to complete
+									// gets reset each new level
+	// done.
+
+	// Rafael
+	qboolean is_dead;
+	// done
+
+	int start_size;
+	int end_size;
+
+	// Rafael props
+
+	qboolean isProp;
+
+	int mg42BaseEnt;
+
+	gentity_t   *melee;
+
+	char        *spawnitem;
+
+	qboolean nopickup;
+
+	int flameQuota, flameQuotaTime, flameBurnEnt;
+
+	int count2;
+
+	int grenadeExplodeTime;         // we've caught a grenade, which was due to explode at this time
+	int grenadeFired;               // the grenade entity we last fired
+
+	int mg42ClampTime;              // time to wait before an AI decides to ditch the mg42
+
+	char        *track;
+
+	// entity scripting system
+	char                *scriptName;
+
+	int numScriptEvents;
+	g_script_event_t    *scriptEvents;  // contains a list of actions to perform for each event type
+	g_script_status_t scriptStatus;     // current status of scripting
+	// the accumulation buffer
+	int scriptAccumBuffer[G_MAX_SCRIPT_ACCUM_BUFFERS];
+
+	qboolean AASblocking;
+	float accuracy;
+
+	char        *tagName;       // name of the tag we are attached to
+	gentity_t   *tagParent;
+
+	float headshotDamageScale;
+
+	int lastHintCheckTime;                  // DHM - Nerve
+	// -------------------------------------------------------------------------------------------
+	// if working on a post release patch, new variables should ONLY be inserted after this point
+	// DHM - Nerve :: the above warning does not really apply to MP, but I'll follow it for good measure
+
+	int voiceChatSquelch;                   // DHM - Nerve
+	int voiceChatPreviousTime;              // DHM - Nerve
+	int lastBurnedFrameNumber;              // JPW - Nerve   : to fix FT instant-kill exploit*/
+};//Size: 0x274

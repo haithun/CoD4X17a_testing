@@ -342,7 +342,7 @@ void CON_Init( void )
 	tcsetattr (STDIN_FILENO, TCSADRAIN, &tc);
 	ttycon_on = qtrue;
 
-	com_ansiColor = Cvar_RegisterBool("com_ansiColor", qtrue, CVAR_ARCHIVE, "Use ansi colors for sysconsole output");
+	com_ansiColor = Cvar_RegisterBool("ttycon_ansiColor", qtrue, CVAR_ARCHIVE, "Use ansi colors for sysconsole output");
 }
 
 

@@ -26,6 +26,10 @@ nasm -f elf cvar_hooks.asm
 nasm -f elf filesystem_hooks.asm
 nasm -f elf sys_thread_hooks.asm
 nasm -f elf punkbuster_hooks.asm
+nasm -f elf sys_main_hooks.asm
+nasm -f elf xassets_hooks.asm
+nasm -f elf trace_hooks.asm
+nasm -f elf misc_hooks.asm
 
 echo Linking...
 gcc -m32 -Wl,-ldl,-lm,-Tlinkerscript.ld -o cod4x17a_dedrun *.o 

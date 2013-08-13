@@ -59,3 +59,16 @@ Z_Malloc:
 global Com_Filter
 Com_Filter:
     jmp 0x819837e
+
+global Mem_Init
+Mem_Init:
+    jmp 0x81a75e6
+
+global Mem_BeginAlloc
+Mem_BeginAlloc:
+    jmp 0x81a74d0
+
+global Mem_EndAlloc
+Mem_EndAlloc:
+    jmp 0x81a750a
+

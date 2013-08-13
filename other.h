@@ -157,27 +157,6 @@ typedef struct cplane_s {
 } cplane_t;
 
 
-// a trace is returned when a box is swept through the world
-typedef struct {
-	float	fraction;       //0x00 time completed, 1.0 = didn't hit anything
-	int	unknown[6];
-/*	qboolean allsolid;      // if true, plane is not valid
-	qboolean startsolid;    // if true, the initial point was in a solid area
-	float fraction;         // time completed, 1.0 = didn't hit anything			//0x00
-	vec3_t endpos;          // final position
-	cplane_t plane;         // surface normal at impact, transformed to world space
-	int surfaceFlags;       // surface hit
-	int contents;           // contents on other side of surface hit*/
-	int	var_02;		//0x1c
-	short	entityNum;      //0x20 entity the contacted sirface is a part of
-} trace_t;
-
-// trace->entityNum can also be 0 to (MAX_GENTITIES-1)
-// or ENTITYNUM_NONE, ENTITYNUM_WORLD
-
-typedef int clipHandle_t;
-typedef int fileHandle_t;
-
 /*
 ========================================================================
 
@@ -335,23 +314,6 @@ netadr_t	net_local_adr;
 
 time_t realtime;
 
-
-typedef enum {
-	// bk001129 - make sure SE_NONE is zero
-	SE_NONE = 0,    // evTime is still valid
-	SE_CONSOLE, // evPtr is a char*
-	SE_PACKET   // evPtr is a netadr_t followed by data bytes to evPtrLength
-} sysEventType_t;
-
-typedef struct {
-	int evTime;
-	sysEventType_t evType;
-	int evValue, evValue2;
-	int evPtrLength;                // bytes of data pointed to by evPtr, for journaling
-	void            *evPtr;         // this must be manually freed if not NULL
-} sysEvent_t;
-
-
 typedef struct{
     const char*		fastfile;
     int			loadpriority;
@@ -407,55 +369,6 @@ unsigned const char	*end;
 
 #define	MAX_REDIRECT_SERVERS	4
 #define	MAX_CONNECTWAITTIME	10
-
-
-#define NYT HMAX                    /* NYT = Not Yet Transmitted */
-#define INTERNAL_NODE ( HMAX + 1 )
-
-typedef struct nodetype {
-	struct  nodetype *left, *right, *parent; /* tree structure */
-//	struct  nodetype *next, *prev; /* doubly-linked list */
-//	struct  nodetype **head; /* highest ranked node in block */
-	int weight;
-	int symbol; //0x10
-	struct  nodetype *next, *prev; /* doubly-linked list */
-	struct  nodetype **head; /* highest ranked node in block */
-
-} node_t;
-
-#define HMAX 256 /* Maximum symbol */
-
-typedef struct {
-	int blocNode;
-	int blocPtrs;
-
-	node_t*     tree;
-	node_t*     lhead;
-	node_t*     ltail;
-	node_t*     loc[HMAX + 1];
-	node_t**    freelist;
-
-	node_t nodeList[768];
-	node_t*     nodePtrs[768];
-} huff_t;
-
-typedef struct {
-	huff_t compressor;
-	huff_t decompressor;
-} huffman_t;
-
-void    Huff_Compress( msg_t *buf, int offset );
-void    Huff_Decompress( msg_t *buf, int offset );
-void    Huff_Init( huffman_t *huff );
-void    Huff_addRef( huff_t* huff, byte ch );
-int     Huff_Receive( node_t *node, int *ch, byte *fin );
-void    Huff_transmit( huff_t *huff, int ch, byte *fout );
-//void    Huff_offsetReceive( node_t *node, int *ch, byte *fin, int *offset );
-void    Huff_offsetTransmit( huff_t *huff, int ch, byte *fout, int *offset );
-void    Huff_putBit( int bit, byte *fout, int *offset );
-int     Huff_getBit( byte *fout, int *offset );
-
-extern huffman_t clientHuffTables;
 
 struct snapshotInfo_s;
 
