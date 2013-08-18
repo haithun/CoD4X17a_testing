@@ -26,6 +26,9 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
+#ifndef __ENTITY_H__
+#define __ENTITY_H__
+
 #include "q_math.h"
 #include "q_shared.h"
 
@@ -431,3 +434,56 @@ struct gentity_s {
 	int voiceChatPreviousTime;              // DHM - Nerve
 	int lastBurnedFrameNumber;              // JPW - Nerve   : to fix FT instant-kill exploit*/
 };//Size: 0x274
+
+
+/***************** Verified *******************************/
+
+#define GENTITYNUM_BITS     10  // JPW NERVE put q3ta default back for testing	// don't need to send any more
+//#define	GENTITYNUM_BITS		11		// don't need to send any more		(SA) upped 4/21/2001 adjusted: tr_local.h (802-822), tr_main.c (1501), sv_snapshot (206)
+#define MAX_GENTITIES       ( 1 << GENTITYNUM_BITS )
+
+// entitynums are communicated with GENTITY_BITS, so any reserved
+// values thatare going to be communcated over the net need to
+// also be in this range
+#define ENTITYNUM_NONE      ( MAX_GENTITIES - 1 )
+
+/**********************************************************/
+
+#define ENTITYNUM_WORLD     ( MAX_GENTITIES - 2 )
+#define ENTITYNUM_MAX_NORMAL    ( MAX_GENTITIES - 2 )
+
+#define	MAX_ENT_CLUSTERS	16
+
+
+
+
+
+// contents flags are seperate bits
+// a given brush can contribute multiple content bits
+// multiple brushes can be in a single leaf
+
+// these definitions also need to be in q_shared.h!
+
+// lower bits are stronger, and will eat weaker brushes completely
+#define CONTENTS_SOLID          1       // an eye is never valid in a solid
+
+
+#define CONTENTS_PLAYERCLIP     0x10000
+#define CONTENTS_MONSTERCLIP    0x20000
+#define CONTENTS_VEHICLECLIP	//??
+#define CONTENTS_ITEMCLIP
+#define CONTENTS_NODROP
+#define CONTENTS_NONSOLID
+
+
+
+#define CONTENTS_BODY           0x2000000   // should never be on a brush, only in game
+
+#define PLAYER_SOLIDMASK	0x00600000
+
+
+
+
+
+
+#endif

@@ -60,6 +60,8 @@ void __cdecl Cbuf_AddText(int dummy, const char* text);
 qboolean Cmd_AddCommand( const char *cmd_name, xcommand_t function );
 qboolean Cmd_RemoveCommand( const char *cmd_name );
 qboolean Cmd_SetPower(const char *cmd_name, int power);
+int Cmd_GetPower(const char *cmd_name);
+void	Cmd_ResetPower();
 
 int	SV_Cmd_Argc( void );
 int	Cmd_Argc( void );
@@ -71,7 +73,9 @@ char	*Cmd_Argsv( int arg, char* buff, int bufsize );
 void	Cmd_CommandCompletion( void(*callback)(const char *s) );
 void	Cmd_CompleteArgument( const char *command, char *args, int argNum );
 void	Cmd_SetCommandCompletionFunc( const char *command, completionFunc_t complete );
-
+void	Cmd_AddCommands(void);
+void	Cmd_WritePowerConfig(char* buffer, int size);
+qboolean Cmd_InfoSetPower( const char *infostring );
 
 #endif
 

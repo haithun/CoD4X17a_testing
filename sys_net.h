@@ -21,10 +21,13 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 // server.h
 
-#include "q_shared.h"
+
 
 #ifndef __SYS_NET_H__
 #define __SYS_NET_H__
+
+#include "q_shared.h"
+#include "cvar.h"
 /*
 ==============================================================
 
@@ -113,7 +116,7 @@ qboolean	Sys_StringToAdr( const char *s, netadr_t *a, netadrtype_t family );
 //Does NOT parse port numbers, only base addresses.
 qboolean	Sys_IsLANAddress (netadr_t *adr);
 void		Sys_ShowIP(void);
-
+qboolean	NET_TCPSendData( int *sock, const void *data, int length );
 
 
 
@@ -125,5 +128,6 @@ typedef enum {
 	TCP_AUTHSUCCESSFULL
 }tcpclientstate_t;
 
+extern cvar_t* net_enabled;
 
 #endif

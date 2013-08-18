@@ -5,7 +5,8 @@
 #gcc -m32 -Wall -O1 -fvisibility=hidden -fno-omit-frame-pointer -c cod4_extfunc.c
 #gcc -m32 -Wall -O1 -s -fvisibility=hidden -fno-omit-frame-pointer -mtune=prescott -c cod4_extfunc.c
 echo Compiling C-code...
-gcc -m32 -Wall -O1 -g -fno-omit-frame-pointer -mtune=prescott -c *.c
+gcc -m32 -Wall -O1 -g -fno-omit-frame-pointer -mtune=prescott -c *.c | more
+
 #gcc -m32 -Wall -O1 -s -fvisibility=hidden -fno-omit-frame-pointer -march=core2 -c cod4_extfunc.c
 
 
@@ -30,6 +31,9 @@ nasm -f elf sys_main_hooks.asm
 nasm -f elf xassets_hooks.asm
 nasm -f elf trace_hooks.asm
 nasm -f elf misc_hooks.asm
+nasm -f elf scr_vm_hooks.asm
+nasm -f elf g_sv_hooks.asm
+nasm -f elf server_hooks.asm
 
 echo Linking...
 gcc -m32 -Wl,-ldl,-lm,-Tlinkerscript.ld -o cod4x17a_dedrun *.o 

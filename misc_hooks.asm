@@ -31,3 +31,11 @@ BG_IsWeaponValid:
 global SEH_StringEd_GetString
 SEH_StringEd_GetString:
     jmp 0x817fbe0
+
+global DObjInit
+DObjInit:
+    jmp 0x81acb00
+
+global SL_RemoveRefToString
+SL_RemoveRefToString:
+    jmp 0x8150e24

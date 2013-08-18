@@ -5,14 +5,14 @@
 #include <setjmp.h>
 
 
-int Sys_Milliseconds( void );
+unsigned int Sys_Milliseconds( void );
 void Sys_TimerInit( void );
 unsigned long long Sys_Microseconds( void );
 int Sys_Seconds( void );
 void Sys_Quit( void );
 void Sys_Print( const char *msg );
 void Sys_SigHandler( int signal );
-void Sys_TermProcess(int signal);
+void Sys_TermProcess(void);
 char *Sys_ConsoleInput(void);
 void Sys_AnsiColorPrint( const char *msg );
 void Sys_PrintBinVersion( const char* name );

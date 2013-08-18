@@ -45,4 +45,33 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define MAX_MSGLEN 0x20000
 
+// the svc_strings[] array in cl_parse.c should mirror this
+//
+// server to client
+//
+enum svc_ops_e {
+	svc_nop,
+	svc_gamestate,
+	svc_configstring,           // [short] [string] only in gamestate messages
+	svc_baseline,               // only in gamestate messages
+	svc_serverCommand,          // [string] to be executed by client game module
+	svc_download,               // [short] size [size bytes]
+	svc_snapshot,
+	svc_EOF,
+};
+
+
+//
+// client to server
+//
+
+enum clc_ops_e {
+	clc_move,               // [[usercmd_t]
+	clc_moveNoDelta,        // [[usercmd_t]
+	clc_clientCommand,      // [string] message
+	clc_EOF,
+	clc_nop
+};
+
 #endif
+

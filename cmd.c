@@ -1,4 +1,3 @@
-#include "player.h"
 
 #include <string.h>
 
@@ -97,7 +96,8 @@ void Cmd_AddCommands(){
 }
 
 
-qboolean Cmd_SetPower(const char *cmd_name, int power){
+qboolean Cmd_SetPower(const char *cmd_name, int power)
+{
 
     cmd_function_t *cmd;
     if(!cmd_name) return qfalse;
@@ -113,6 +113,26 @@ qboolean Cmd_SetPower(const char *cmd_name, int power){
     return qfalse;
 }
 
+int	Cmd_GetPower(const char* cmd_name)
+{
+
+    cmd_function_t *cmd;
+    for(cmd = cmd_functions ; cmd ; cmd = cmd->next){
+        if(!Q_stricmp(cmd_name,cmd->name)){
+
+                if(!cmd->minPower) return 100;
+                else return cmd->minPower;
+        }
+    }
+    return -1; //Don't exist
+}
+
+void Cmd_ResetPower()
+{
+    cmd_function_t *cmd;
+    //Init the permission table with default values
+    for(cmd = cmd_functions ; cmd ; cmd = cmd->next) cmd->minPower = 100;
+}
 
 
 /*
@@ -320,3 +340,35 @@ void Cmd_SetCommandCompletionFunc( const char *command, completionFunc_t complet
 }
 
 
+qboolean Cmd_InfoSetPower( const char *infostring )
+{
+        int power;
+        char cmdname[40];
+
+        power = atoi(Info_ValueForKey(infostring, "power"));
+        Q_strncpyz(cmdname, Info_ValueForKey(infostring, "cmd"), sizeof(cmdname));
+
+        if(!Cmd_SetPower(cmdname, power)){
+            Com_DPrintf("Warning: Commandname %s is not known yet\n", cmdname);
+            return qfalse;
+        }
+        return qtrue;
+
+}
+
+
+void Cmd_WritePowerConfig(char* buffer, int size)
+{
+    char infostring[1024];
+
+    Q_strcat(buffer, size,"\n//Minimum power settings\n");
+    cmd_function_t *cmd;
+    for ( cmd = cmd_functions ; cmd ; cmd = cmd->next ){
+        *infostring = 0;
+        Info_SetValueForKey(infostring, "type", "cmdMinPower");
+        Info_SetValueForKey(infostring, "cmd", cmd->name);
+        Info_SetValueForKey(infostring, "power", va("%i",cmd->minPower));
+        Q_strcat(buffer, size, infostring);
+        Q_strcat(buffer, size, "\\\n");
+    }
+}

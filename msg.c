@@ -21,11 +21,15 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 #include <string.h>
 #include <stdint.h>
+#include <math.h>
 
 #include "msg.h"
+#include "entity.h"
+#include "player.h"
 #include "qcommon_io.h"
 #include "net_game_conf.h"
 #include "huffman.h"
+
 
 #ifndef	MAX_MSGLEN
 #define	MAX_MSGLEN	0x20000		// max length of a message, which may
@@ -435,7 +439,7 @@ void MSG_NUinitHuffman() {
 
 //===========================================================================
 
-/*
+
 
 typedef struct{
     const char* name;
@@ -1937,16 +1941,13 @@ netField_t playerStateFields[] =
 	{ PSF( weaponrechamber[3] ), 32, 0},
 	{ PSF( leanf ), 0, 0},
 	{ PSF( adsDelayTime ), 32, 1},
-};*/
+};
 
 
 
-
-
-
-
-
-
-
+int MSG_WriteBitsNoCompress( int d, byte* src, byte* dst , int size){
+	Com_Memcpy(dst, src, size);
+	return size;
+}
 
 

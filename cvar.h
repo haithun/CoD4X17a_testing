@@ -81,36 +81,38 @@ typedef struct{
 
 
 //Defines Cvarrelated functions inside executable file
- cvar_t* __cdecl Cvar_RegisterString(const char *var_name, const char *var_value, int flags, const char *var_description);
- cvar_t* __cdecl Cvar_RegisterBool(const char *var_name, qboolean var_value, int flags, const char *var_description);
- cvar_t* __cdecl Cvar_RegisterInt(const char *var_name, int var_value, int min_value, int max_value, int flags, const char *var_description);
- cvar_t* __cdecl Cvar_RegisterEnum(const char *var_name, char** valnames, int defaultval, int flags, const char *var_description);
- cvar_t* __cdecl Cvar_RegisterFloat(const char *var_name, float var_value, float min_value, float max_value, int flags, const char *var_description);
- void __cdecl Cvar_SetInt(cvar_t const* var, int val);
- void __cdecl Cvar_SetBool(cvar_t const* var, qboolean val);
- void __cdecl Cvar_SetString(cvar_t const* var, char const* string);
- void __cdecl Cvar_SetFloat(cvar_t const* var, float val);
- void __cdecl Cvar_Set_f(void);
- void __cdecl Cvar_SetS_f(void);
- void __cdecl Cvar_Toggle_f(void);
- void __cdecl Cvar_TogglePrint_f(void);
- void __cdecl Cvar_SetA_f(void);
- void __cdecl Cvar_SetFromCvar_f(void);
- void __cdecl Cvar_SetFromLocalizedStr_f(void);
- void __cdecl Cvar_SetToTime_f(void);
- void __cdecl Cvar_Reset_f(void);
- void __cdecl Cvar_List_f(void);
- void __cdecl Cvar_Dump_f(void);
- void __cdecl Cvar_RegisterBool_f(void);
- void __cdecl Cvar_RegisterInt_f(void);
- void __cdecl Cvar_RegisterFloat_f(void);
- void __cdecl Cvar_SetU_f(void);
- int __cdecl g_cvar_valueforkey(char* key);
- char* __cdecl Cvar_InfoString(int unk, int bit);
- void __cdecl Cvar_ForEach(void (*callback)(cvar_t const*, void* passedhere), void* passback);
- char* __cdecl Cvar_DisplayableValue(cvar_t const*);
- char* __cdecl Cvar_GetVariantString(const char* name);
- cvar_t* __regparm1 Cvar_FindMalleableVar(const char* name);
+cvar_t* __cdecl Cvar_RegisterString(const char *var_name, const char *var_value, int flags, const char *var_description);
+cvar_t* __cdecl Cvar_RegisterBool(const char *var_name, qboolean var_value, int flags, const char *var_description);
+cvar_t* __cdecl Cvar_RegisterInt(const char *var_name, int var_value, int min_value, int max_value, int flags, const char *var_description);
+cvar_t* __cdecl Cvar_RegisterEnum(const char *var_name, char** valnames, int defaultval, int flags, const char *var_description);
+cvar_t* __cdecl Cvar_RegisterFloat(const char *var_name, float var_value, float min_value, float max_value, int flags, const char *var_description);
+void __cdecl Cvar_SetInt(cvar_t const* var, int val);
+void __cdecl Cvar_SetBool(cvar_t const* var, qboolean val);
+void __cdecl Cvar_SetString(cvar_t const* var, char const* string);
+void __cdecl Cvar_SetFloat(cvar_t const* var, float val);
+void __cdecl Cvar_Set_f(void);
+void __cdecl Cvar_SetS_f(void);
+void __cdecl Cvar_Toggle_f(void);
+void __cdecl Cvar_TogglePrint_f(void);
+void __cdecl Cvar_SetA_f(void);
+void __cdecl Cvar_SetFromCvar_f(void);
+void __cdecl Cvar_SetFromLocalizedStr_f(void);
+void __cdecl Cvar_SetToTime_f(void);
+void __cdecl Cvar_Reset_f(void);
+void __cdecl Cvar_List_f(void);
+void __cdecl Cvar_Dump_f(void);
+void __cdecl Cvar_RegisterBool_f(void);
+void __cdecl Cvar_RegisterInt_f(void);
+void __cdecl Cvar_RegisterFloat_f(void);
+void __cdecl Cvar_SetU_f(void);
+int __cdecl g_cvar_valueforkey(char* key);
+char* __cdecl Cvar_InfoString(int unk, int bit);
+void __cdecl Cvar_ForEach(void (*callback)(cvar_t const*, void* passedhere), void* passback);
+char* __cdecl Cvar_DisplayableValue(cvar_t const*);
+char* __cdecl Cvar_GetVariantString(const char* name);
+cvar_t* __regparm1 Cvar_FindMalleableVar(const char* name);
+void Cvar_Init(void);
+
 
 //defines Cvarflags
 #define	CVAR_ARCHIVE		1	// set to cause it to be saved to vars.rc

@@ -202,6 +202,7 @@ void __cdecl FS_ShutdownServerReferencedIwds(void);
 void __cdecl FS_ShutdownServerReferencedFFs(void);
 const char* __cdecl FS_LoadedIwdPureChecksums(void);
 char* __cdecl FS_GetMapBaseName( const char* mapname );
-
+qboolean FS_CreatePath (char *OSPath);
+void FS_SV_HomeCopyFile(char* from, char* to);
 
 #endif

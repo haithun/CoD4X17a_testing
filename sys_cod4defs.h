@@ -25,4 +25,7 @@
 #define BUILD_NUMBER -1
 #endif
 
+#define MAX_CLIENTS 64
+#define MAX_CONFIGSTRINGS 2442
+
 #endif

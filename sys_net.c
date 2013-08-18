@@ -124,21 +124,21 @@ int NET_TimeGetTime( void )
 }
 #endif
 
-#ifndef TCP_ConnectionClosed
-#pragma message "Function TCP_ConnectionClosed is undefined"
-void TCP_ConnectionClosed(netadr_t* adr, int sock, int connectionId, int serviceId){}
+#ifndef NET_TCPConnectionClosed
+#pragma message "Function NET_TCPConnectionClosed is undefined"
+void NET_TCPConnectionClosed(netadr_t* adr, int sock, int connectionId, int serviceId){}
 #endif
-#ifndef UDP_PacketEvent
-#pragma message "Function UDP_PacketEvent is undefined"
-void UDP_PacketEvent(netadr_t* from, void* data, int len){}
+#ifndef NET_UDPPacketEvent
+#pragma message "Function NET_UDPPacketEvent is undefined"
+void NET_UDPPacketEvent(netadr_t* from, void* data, int len){}
 #endif
-#ifndef TCP_AuthPacketEvent
-#pragma message "Function TCP_AuthPacketEvent is undefined"
-tcpclientstate_t TCP_AuthPacketEvent(netadr_t* remote, byte* bufData, int cursize, int* sock, int* connectionId, int *serviceId){ return TCP_AUTHSUCCESSFULL; }
+#ifndef NET_TCPAuthPacketEvent
+#pragma message "Function NET_TCPAuthPacketEvent is undefined"
+tcpclientstate_t NET_TCPAuthPacketEvent(netadr_t* remote, byte* bufData, int cursize, int* sock, int* connectionId, int *serviceId){ return TCP_AUTHSUCCESSFULL; }
 #endif
-#ifndef TCP_PacketEvent
-#pragma message "Function TCP_PacketEvent is undefined"
-void TCP_PacketEvent(netadr_t* remote, byte* bufData, int cursize, int* sock, int connectionId, int serviceId){}
+#ifndef NET_TCPPacketEvent
+#pragma message "Function NET_TCPPacketEvent is undefined"
+void NET_TCPPacketEvent(netadr_t* remote, byte* bufData, int cursize, int* sock, int connectionId, int serviceId){}
 #endif
 
 
@@ -148,7 +148,7 @@ void TCP_PacketEvent(netadr_t* remote, byte* bufData, int cursize, int* sock, in
 
 static int networkingEnabled = 0;
 
-static cvar_t	*net_enabled;
+cvar_t		*net_enabled;
 
 static cvar_t	*net_socksEnabled;
 static cvar_t	*net_socksServer;
@@ -2158,7 +2158,7 @@ int NET_GetTcpPacket(tcpConnections_t *conn, void *netmsg, int maxsize, qboolean
 
 		if(conn->state >= TCP_AUTHSUCCESSFULL){
 			tcpServer.activeConnectionCount--;
-			TCP_ConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
+			NET_TCPConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
 		}
 
 		conn->sock = INVALID_SOCKET;
@@ -2172,7 +2172,7 @@ int NET_GetTcpPacket(tcpConnections_t *conn, void *netmsg, int maxsize, qboolean
 		conn->lastMsgTime = 0;//This marks the slot as available
 		if(conn->state >= TCP_AUTHSUCCESSFULL){
 			tcpServer.activeConnectionCount--;
-			TCP_ConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
+			NET_TCPConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
 			Com_Printf("Connection closed by client: %s\n", NET_AdrToString(&conn->remote));
 		}
 		conn->state = 0;
@@ -2234,7 +2234,7 @@ void NET_TcpPacketEventLoop(){
 						if(conn->lastMsgTime == 0 || conn->sock < 1){
 							break; //Connection closed unexpected
 						//Close connection, we don't want to process huge messages as auth-packet or want to quit if the login was bad
-						}else if(cursize > 2048 || (conn->state = TCP_AuthPacketEvent(&conn->remote, bufData, cursize, &conn->sock, &conn->connectionId, &conn->serviceId)) == TCP_AUTHBAD)
+						}else if(cursize > 2048 || (conn->state = NET_TCPAuthPacketEvent(&conn->remote, bufData, cursize, &conn->sock, &conn->connectionId, &conn->serviceId)) == TCP_AUTHBAD)
 						{
 							closesocket(conn->sock);
 							conn->lastMsgTime = 0;
@@ -2273,7 +2273,7 @@ void NET_TcpPacketEventLoop(){
 							Com_PrintWarning( "Oversize packet from %s\n", NET_AdrToString (&conn->remote));
 							cursize = sizeof(bufData);
 						}
-						TCP_PacketEvent(&conn->remote, bufData, cursize, &conn->sock, conn->connectionId, conn->serviceId);
+						NET_TCPPacketEvent(&conn->remote, bufData, cursize, &conn->sock, conn->connectionId, conn->serviceId);
 						break;
 					}
 
@@ -2323,7 +2323,7 @@ void NET_OpenTcpConnection(netadr_t *from, int newfd){
 		if(tcpServer.activeConnectionCount > MAX_TCPCONNECTIONS / 3 && oldestTimeAccepted + MAX_TCPCONNECTEDTIMEOUT < NET_TimeGetTime()){
 				conn = &tcpServer.connections[oldestAccepted];
 				tcpServer.activeConnectionCount--; //As this connection is going to be closed decrease the counter
-				TCP_ConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
+				NET_TCPConnectionClosed(&conn->remote, conn->sock, conn->connectionId, conn->serviceId);
 
 		}else if(oldestTime + MIN_TCPAUTHWAITTIME < NET_TimeGetTime()){
 				conn = &tcpServer.connections[oldest];
@@ -2390,7 +2390,7 @@ __optimize3 __regparm1 qboolean NET_Event(int socket)
 					continue;          // drop this packet
 			}
 
-			UDP_PacketEvent(&from, bufData, len);
+			NET_UDPPacketEvent(&from, bufData, len);
 
 				//Com_RunAndTimeServerPacket(&from, &netmsg);
 			//else
@@ -2685,7 +2685,7 @@ NET_TCPSendData
 Only for Stream sockets (TCP)
 ==================
 */
-qboolean NET_TcpSendData( int *sock, const void *data, int length ) {
+qboolean NET_TCPSendData( int *sock, const void *data, int length ) {
 
 	int state;
 

@@ -72,3 +72,10 @@ global Mem_EndAlloc
 Mem_EndAlloc:
     jmp 0x81a750a
 
+global TempMalloc
+TempMalloc:
+    jmp 0x8151dce
+
+global Com_DvarDump
+Com_DvarDump:
+    jmp 0x8126764

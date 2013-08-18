@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "sys_cod4loader.h"
 #include "sys_thread.h"
 #include "punkbuster.h"
+#include "server.h"
 
 #include <sys/resource.h>
 #include <libgen.h>
@@ -43,9 +44,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include <fpu_control.h>
 
 #define MAX_QUED_EVENTS 256
-#define sys_timeBaseInt_ADDR 0x1411c5c4
-
-#define sys_timeBaseInt *((int*)(sys_timeBaseInt_ADDR))
 
 #define MAX_CMD 1024
 static char exit_cmdline[MAX_CMD] = "";
@@ -75,12 +73,26 @@ Sys_Milliseconds
 
 unsigned int sys_timeBase;
 
-int Sys_Milliseconds( void ) {
+unsigned int Sys_Milliseconds( void )
+{
 	struct timeval tp;
 
 	gettimeofday( &tp, NULL );
 
 	return ( tp.tv_sec - sys_timeBase ) * 1000 + tp.tv_usec / 1000;
+}
+
+unsigned long long Sys_MillisecondsLong( void )
+{
+	unsigned long long time;
+
+	struct timeval tp;
+
+	gettimeofday( &tp, NULL );
+
+	time = (unsigned long long)tp.tv_sec - (unsigned long long)sys_timeBase;
+	time = time * 1000 + tp.tv_usec / 1000;
+	return time;
 }
 
 
@@ -89,9 +101,9 @@ void Sys_TimerInit( void ) {
 
 	gettimeofday( &tp, NULL );
 
-	if ( !sys_timeBase ) {
+	if ( !sys_timeBase )
+	{
 		sys_timeBase = tp.tv_sec;
-		sys_timeBaseInt = tp.tv_sec;
 	}
 }
 
@@ -227,11 +239,10 @@ void Sys_SigHandler( int signal )
 }
 
 
-void Sys_TermProcess(int signal)
+void Sys_TermProcess( )
 {
     int status;
     wait(&status);
-    return;
 }
 
 

@@ -353,7 +353,7 @@ typedef struct {
 } pmoveExt_t;   // data used both in client and server - store it here
 
 
-
+typedef struct gclient_s gclient_t;
 
 
 // this structure is cleared on each ClientSpawn(),

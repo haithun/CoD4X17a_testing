@@ -290,6 +290,20 @@ void QDECL Com_DPrintNoRedirect( const char *fmt, ... ) {
         Com_PrintMessage( 0, msg, MSG_NORDPRINT);
 }
 
+void QDECL Com_PrintScriptRuntimeWarning(const char *fmt, ...)
+{
+
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+
+	va_start (argptr,fmt);
+	Q_vsnprintf (msg, sizeof(msg), fmt, argptr);
+	va_end (argptr);
+
+        Com_PrintMessage( 0, va("^6Script Runtime Warning: %s\n", msg), MSG_WARNING);
+}
+
+
 
 #define MAX_REDIRECTDESTINATIONS 4
 

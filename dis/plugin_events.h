@@ -27,7 +27,7 @@ enum PluginEvents{
     PLUGINS_ITEMCOUNT
 
 };
-
+/*
 char Plugin_Events[PLUGINS_ITEMCOUNT][32]={
 
     "OnInfoRequest",
@@ -49,5 +49,5 @@ char Plugin_Events[PLUGINS_ITEMCOUNT][32]={
     "OnPreFastRestart",
     "OnPostFastRestart"
 };
-
+*/
 void Plugin_Event(int, ...);

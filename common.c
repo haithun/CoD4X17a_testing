@@ -14,6 +14,9 @@
 #include "xassets.h"
 #include "plugin_events.h"
 #include "misc.h"
+#include "scr_vm.h"
+#include "netchan.h"
+#include "server.h"
 
 #include <string.h>
 #include <setjmp.h>
@@ -24,7 +27,9 @@
 
 
 jmp_buf		*abortframe;
+
 unsigned long long com_uFrameTime = 0;
+unsigned long long com_frameTime = 0;
 
 cvar_t* com_version;
 cvar_t* com_shortversion;
@@ -495,7 +500,6 @@ void Com_Quit_f( void ) {
 		// which would trigger an unload of active VM error.
 		// Sys_Quit will kill this process anyways, so
 		// a corrupt call stack makes no difference
-		SV_DemoSystemShutdown();
 		Hunk_ClearTempMemory();
 		Hunk_ClearTempMemoryHigh();
 		SV_Shutdown("EXE_SERVERQUIT");
@@ -700,8 +704,9 @@ void Com_Init(char* commandLine){
     }
     Cmd_AddCommand ("quit", Com_Quit_f);
 
-    Com_AddLoggingCommands();
-    HL2Rcon_AddSourceAdminCommands();
+//    Com_AddLoggingCommands();
+//    HL2Rcon_AddSourceAdminCommands();
+
     Cmd_AddCommands();
 
     Sys_Init();
@@ -889,8 +894,8 @@ __optimize3 void Com_Frame( void ) {
 	} while( timeVal );
 */
 
-	com_frameTime = Sys_Milliseconds();
-	com_uFrameTime = Sys_Microseconds();
+	com_frameTime = Sys_MillisecondsLong();
+	com_uFrameTime = Sys_MicrosecondsLong();
 
 	usec = com_uFrameTime - lastTime;
 	lastTime = com_uFrameTime;
