@@ -125,7 +125,7 @@ void Sys_InitCrashDumps(){
 qboolean Sys_MemoryProtectWrite(void* startoffset, int len)
 {
 
-	if(mprotect(startoffset + getpagesize() - ((int)startoffset % getpagesize()), len - (len % getpagesize()), PROT_READ | PROT_WRITE) != 0)
+	if(mprotect(startoffset - ((int)startoffset % getpagesize()), len + (len % getpagesize()), PROT_READ | PROT_WRITE) != 0)
 	{
             perror("Sys_MemoryProtectWrite: mprotect change memory to writable error");
             return qfalse;
@@ -137,7 +137,7 @@ qboolean Sys_MemoryProtectWrite(void* startoffset, int len)
 qboolean Sys_MemoryProtectExec(void* startoffset, int len)
 {
 
-	if(mprotect(startoffset + getpagesize() - ((int)startoffset % getpagesize()), len - (len % getpagesize()), PROT_READ | PROT_EXEC) != 0)
+	if(mprotect(startoffset - ((int)startoffset % getpagesize()), len + (len % getpagesize()), PROT_READ | PROT_EXEC) != 0)
 	{
             perror("Sys_MemoryProtectExec: mprotect change memory to readonly/execute error");
             return qfalse;
@@ -149,7 +149,7 @@ qboolean Sys_MemoryProtectExec(void* startoffset, int len)
 qboolean Sys_MemoryProtectReadonly(void* startoffset, int len)
 {
 
-	if(mprotect(startoffset + getpagesize() - ((int)startoffset % getpagesize()), len - (len % getpagesize()), PROT_READ) != 0)
+	if(mprotect(startoffset - ((int)startoffset % getpagesize()), len + (len % getpagesize()), PROT_READ) != 0)
 	{
             perror("Sys_MemoryProtectReadonly: mprotect change memory to readonly error");
             return qfalse;

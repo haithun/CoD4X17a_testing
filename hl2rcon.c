@@ -1,3 +1,19 @@
+#include "hl2rcon.h"
+#include "q_shared.h"
+#include "qcommon.h"
+#include "qcommon_io.h"
+#include "cmd.h"
+#include "nvconfig.h"
+#include "msg.h"
+#include "sys_net.h"
+#include "server.h"
+#include "net_game_conf.h"
+#include "sha256.h"
+#include "punkbuster.h"
+
+#include <stdint.h>
+#include <string.h>
+#include <stdlib.h>
 /*
 ========================================================================
 
@@ -5,6 +21,10 @@ Source Rcon facility
 
 ========================================================================
 */
+
+#ifndef MAX_MSGLEN
+#define MAX_MSGLEN 0x20000
+#endif
 
 
 sourceRcon_t sourceRcon;
@@ -386,7 +406,7 @@ badrcon:
 	Cmd_EndTokenizeString();
 	Com_Printf ("Bad rcon from %s (TCP)\n", NET_AdrToString (from) );
 	//Don't allow another attempt for 20 seconds
-	SV_PlayerAddBanByip(*from, "Bad rcon", 0, 0, realtime + 20);
+	SV_PlayerAddBanByip(*from, "Bad rcon", 0, 0, Com_GetRealtime() + 20);
 
 	MSG_Init(&sendmsg, msgbuf, sizeof(msgbuf));
 	MSG_WriteLong(&sendmsg, 10);

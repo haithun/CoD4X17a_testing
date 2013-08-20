@@ -31,5 +31,7 @@ extern unsigned long long com_uFrameTime;
 extern cvar_t* com_dedicated;
 extern cvar_t* com_timescale;
 
+int Com_IsDeveloper();
+
 
 #endif

@@ -106,8 +106,10 @@ void XAssets_PatchLimits(){
         void* *DB_XAssetPool = (void*)DB_XAssetPool_ADDR;
         ptr = &DB_XAssetPool[0];
 
-	Sys_MemoryProtectWrite(ptr, size);
-
+	if(!Sys_MemoryProtectWrite(ptr, size))
+	{
+		_exit(1);
+	}
         DB_XAssetPool[XModel] = Z_Malloc(MAX_XMODELS*DB_GetXAssetTypeSize(XModel));
         DB_XAssetPool[WeaponDef] = Z_Malloc(MAX_WEAPON*DB_GetXAssetTypeSize(WeaponDef));
         DB_XAssetPool[FxEffectDef] = Z_Malloc(MAX_FX*DB_GetXAssetTypeSize(FxEffectDef));
@@ -120,7 +122,10 @@ void XAssets_PatchLimits(){
 	
 	}
 
-	Sys_MemoryProtectReadonly(ptr, size);
+	if(!Sys_MemoryProtectReadonly(ptr, size))
+	{
+		_exit(1);
+	}
 
 	//Patch XAssets poolsize
 
@@ -128,14 +133,20 @@ void XAssets_PatchLimits(){
 
 	ptr = &DB_XAssetPoolSize[0];
 
-	Sys_MemoryProtectWrite(ptr, size);
+	if(!Sys_MemoryProtectWrite(ptr, size))
+	{
+		_exit(1);
+	}
 
         DB_XAssetPoolSize[XModel] = MAX_XMODELS;
         DB_XAssetPoolSize[WeaponDef] = MAX_WEAPON;
         DB_XAssetPoolSize[FxEffectDef] = MAX_FX;
         DB_XAssetPoolSize[GfxImage] = MAX_GFXIMAGE;
 
-	Sys_MemoryProtectReadonly(ptr, size);
+	if(!Sys_MemoryProtectReadonly(ptr, size))
+	{
+		_exit(1);
+	}
 
 }
 

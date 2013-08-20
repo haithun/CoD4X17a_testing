@@ -20,7 +20,7 @@ typedef struct{
 static msgDisplay_t messages;
 static char motdBuff[200];
 
-void destroyMessage(game_hudelem_t* hudelem){
+void G_DestroyMessage(game_hudelem_t* hudelem){
 
     if(!hudelem || !hudelem->inuse)
         return;
@@ -38,7 +38,7 @@ void destroyMessage(game_hudelem_t* hudelem){
 
 
 
-void showMessage(game_hudelem_t* hudelem, const char* rule, int time){
+void G_ShowMessage(game_hudelem_t* hudelem, const char* rule, int time){
 
     if(!hudelem || !hudelem->inuse)
         return;
@@ -54,13 +54,13 @@ void showMessage(game_hudelem_t* hudelem, const char* rule, int time){
 
     G_HudSetText(hudelem, rule);
 
-    Com_AddTimedEvent(time+700, destroyMessage, 1, hudelem);
+    Com_AddTimedEvent(time+700, G_DestroyMessage, 1, hudelem);
 
 }
 
 
 
-void printRuleForPlayer(client_t *cl){
+void G_PrintRuleForPlayer(client_t *cl){
 
     if(cl->msgType != 1)
         return;
@@ -83,12 +83,12 @@ void printRuleForPlayer(client_t *cl){
     G_HudSetPosition(cl->hudMsg, 0, 25, HUDSCRNALIGN_CENTER, HUDSCRNALIGN_TOP, HUDALIGN_CENTER, HUDALIGN_TOP);
     G_HudSetFont(cl->hudMsg, 1.6, HUDFONT_DEFAULT);
 
-    showMessage(cl->hudMsg, rule, 5000);
+    G_ShowMessage(cl->hudMsg, rule, 5000);
     cl->currentAd++;
 }
 
 
-void printAdvertForPlayer(client_t *cl){
+void G_PrintAdvertForPlayer(client_t *cl){
 
     if(cl->msgType != 2)
         return;
@@ -117,7 +117,7 @@ void printAdvertForPlayer(client_t *cl){
     G_HudSetPosition(cl->hudMsg, 0, 0, HUDSCRNALIGN_CENTER, HUDSCRNALIGN_TOP, HUDALIGN_CENTER, HUDALIGN_TOP);
     G_HudSetFont(cl->hudMsg, 1.4, HUDFONT_DEFAULT);
 
-    showMessage(cl->hudMsg, ad, 8000);
+    G_ShowMessage(cl->hudMsg, ad, 8000);
     cl->currentAd++;
 }
 
@@ -279,7 +279,7 @@ void G_AddAdvert(const char* newtext){
 
 
 
-void InitMotd(){
+void G_InitMotd(){
 
     const char *motd = SV_GetMessageOfTheDay();
     int i = 0;

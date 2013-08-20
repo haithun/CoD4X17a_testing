@@ -20,3 +20,10 @@ global ClientBegin
 ClientBegin:
     jmp 0x80a7700
 
+global StopFollowing
+StopFollowing:
+    jmp 0x80af24c
+
+global G_SayTo
+G_SayTo:
+    jmp 0x80ae6f4

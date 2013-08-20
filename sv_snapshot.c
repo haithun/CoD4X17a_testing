@@ -67,7 +67,7 @@ SV_UpdateServerCommandsToClient
 (re)send all server commands the client hasn't acknowledged yet
 ==================
 */
-DLL_PUBLIC __cdecl void SV_UpdateServerCommandsToClient( client_t *client, msg_t *msg ) {
+__cdecl void SV_UpdateServerCommandsToClient( client_t *client, msg_t *msg ) {
 	int i;
 //	extclient_t* extcl = &svs.extclients[ client - svs.clients ];
 
@@ -84,7 +84,7 @@ DLL_PUBLIC __cdecl void SV_UpdateServerCommandsToClient( client_t *client, msg_t
 }
 
 
-DLL_PUBLIC __cdecl void SV_WriteSnapshotToClient(client_t* client, msg_t* msg){
+__cdecl void SV_WriteSnapshotToClient(client_t* client, msg_t* msg){
 
     snapshotInfo_t snapInfo;
     int lastframe;
@@ -370,7 +370,7 @@ SV_SendMessageToClient
 Called by SV_SendClientSnapshot and SV_SendClientGameState
 =======================
 */
-DLL_PUBLIC __cdecl void SV_SendMessageToClient( msg_t *msg, client_t *client ) {
+__cdecl void SV_SendMessageToClient( msg_t *msg, client_t *client ) {
 	int rateMsec;
 	int len;
 

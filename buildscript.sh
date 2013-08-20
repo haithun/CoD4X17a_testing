@@ -34,6 +34,7 @@ nasm -f elf misc_hooks.asm
 nasm -f elf scr_vm_hooks.asm
 nasm -f elf g_sv_hooks.asm
 nasm -f elf server_hooks.asm
+nasm -f elf msg_hooks.asm
 
 echo Linking...
 gcc -m32 -Wl,-ldl,-lm,-Tlinkerscript.ld -o cod4x17a_dedrun *.o 

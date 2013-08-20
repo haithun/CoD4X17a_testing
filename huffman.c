@@ -709,7 +709,7 @@ int msg_hData[256] = {
 static huffman_t	msgHuff;
 static qboolean		huffInit = qfalse;
 
-int Huff_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize){
+int MSG_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize){
 
     readsize = readsize * 8;
     byte *outptr = outputBuf;

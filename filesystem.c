@@ -204,12 +204,6 @@ or configs will never get loaded from disk!
 #include <errno.h>
 #include <unistd.h>
 
-
-static fileHandle_t logfile;
-static fileHandle_t adminlogfile;
-static fileHandle_t debuglogfile;
-static fileHandle_t enterleavelogfile;
-
 /*
 typedef int (__cdecl *tFS_ReadFile)(const char* qpath, void **buffer);
 tFS_ReadFile FS_ReadFile = (tFS_ReadFile)(0x818bb8c);
@@ -1362,7 +1356,7 @@ int FS_Seek( fileHandle_t f, long offset, int origin ) {
 }
 
 
-DLL_PUBLIC __cdecl const char* FS_GetBasepath(){
+__cdecl const char* FS_GetBasepath(){
 
     if(fs_basepath && *fs_basepath->string){
         return fs_basepath->string;
@@ -1458,21 +1452,6 @@ qboolean FS_VerifyPak( const char *pak ) {
 	}
 
 	return qfalse;
-}
-
-/*
-This function should close all opened non Zip files
-*/
-void FS_CloseLogFiles()
-{
-	if(adminlogfile)
-		FS_FCloseFile( adminlogfile );
-	if(logfile)
-		FS_FCloseFile( logfile );
-	if(debuglogfile)
-		FS_FCloseFile( debuglogfile );
-	if(enterleavelogfile)
-		FS_FCloseFile( enterleavelogfile );
 }
 
 /*

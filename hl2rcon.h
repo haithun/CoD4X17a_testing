@@ -1,3 +1,7 @@
+#include "q_shared.h"
+#include "sys_net.h"
+#include "msg.h"
+
 /*
 ========================================================================
 
@@ -78,3 +82,7 @@ qboolean HL2Rcon_SourceRconEvent(netadr_t *from, msg_t *msg, int *socketfd, int 
 void HL2Rcon_AddSourceAdminCommands();
 void HL2Rcon_SourceRconSendGameLog( const char* data, int msglen);
 void HL2Rcon_SourceRconSendChatToEachClient( const char *text, rconUser_t *self, int cid, qboolean onlyme);
+void HL2Rcon_EventClientEnterTeam(int cid, int team);
+void HL2Rcon_EventClientEnterWorld(int cid);
+void HL2Rcon_EventClientLeave(int cid);
+void HL2Rcon_EventLevelStart();

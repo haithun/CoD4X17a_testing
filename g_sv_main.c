@@ -55,7 +55,7 @@ cvar_t *g_disabledefcmdprefix;
 cvar_t *g_allowConsoleSay;
 
 
-DLL_PUBLIC __cdecl void ExitLevel( void ) {
+__cdecl void ExitLevel( void ) {
 	int i;
 	gclient_t *gcl;
 	client_t *cl;
@@ -126,7 +126,7 @@ void G_SetSavePersist(int val){
 	level.savePersist = val;
 }
 
-DLL_PUBLIC void G_RegisterCvarsCallback( ){
+__cdecl void G_RegisterCvarsCallback( ){
 
     cvar_t** tmp;
 
@@ -146,7 +146,7 @@ G_LogPrintf
 Print to the logfile with a time stamp if it is open
 =================
 */
-DLL_PUBLIC void QDECL G_LogPrintf( const char *fmt, ... ) {
+__cdecl void QDECL G_LogPrintf( const char *fmt, ... ) {
 
 	va_list argptr;
 

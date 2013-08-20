@@ -19,7 +19,7 @@ typedef struct {
 
 vec3_t vec3_origin = {0,0,0};
 
-DLL_PUBLIC __cdecl void SV_ClipMoveToEntity(moveclip_t *clip, svEntity_t *entity, trace_t *trace){
+__cdecl void SV_ClipMoveToEntity(moveclip_t *clip, svEntity_t *entity, trace_t *trace){
 
 	sharedEntity_t *touch;
 	int		touchNum;

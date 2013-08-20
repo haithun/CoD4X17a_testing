@@ -1,15 +1,22 @@
 #include "q_shared.h"
+#include "qcommon.h"
 #include "qcommon_io.h"
 #include "qcommon_mem.h"
+#include "qcommon_logprint.h"
 #include "cvar.h"
 #include "cmd.h"
 #include "server.h"
 #include "punkbuster.h"
 
-#include <string.h>
 
+#include <string.h>
+#include <stdarg.h>
 
 #define SV_OUTPUTBUF_LENGTH 1024
+
+#ifndef MAXPRINTMSG
+#define MAXPRINTMSG 1024
+#endif
 
 static cvar_t* sv_rconsys;
 
@@ -410,5 +417,34 @@ void SV_RemoteCmdWriteAdminConfig(char* buffer, int size)
         Q_strcat(buffer, size, infostring);
         Q_strcat(buffer, size, "\\\n");
     }
+
+}
+
+
+void QDECL SV_PrintAdministrativeLog( const char *fmt, ... ) {
+
+	va_list		argptr;
+	char		msg[MAXPRINTMSG];
+	char		inputmsg[MAXPRINTMSG];
+	struct tm 	*newtime;
+	char*		ltime;
+	time_t		realtime;
+
+	va_start (argptr,fmt);
+	Q_vsnprintf (inputmsg, sizeof(inputmsg), fmt, argptr);
+	va_end (argptr);
+
+	Com_UpdateRealtime();
+	realtime = Com_GetRealtime();
+	newtime = localtime( &realtime );
+	ltime = asctime( newtime );
+	ltime[strlen(ltime)-1] = 0;
+
+	if(SV_UseUids())
+		Com_sprintf(msg, sizeof(msg), "%s - Admin %i with %i power %s\n", ltime, cmdInvoker.currentCmdInvoker, cmdInvoker.currentCmdPower, inputmsg);
+	else
+		Com_sprintf(msg, sizeof(msg), "%s - Admin %s with %i power %s\n", ltime, cmdInvoker.currentCmdInvokerGuid, cmdInvoker.currentCmdPower, inputmsg);
+
+	Com_PrintAdministrativeLog( msg );
 
 }

@@ -48,7 +48,7 @@ void    Huff_transmit( huff_t *huff, int ch, byte *fout );
 void    Huff_offsetTransmit( huff_t *huff, int ch, byte *fout, int *offset );
 void    Huff_putBit( int bit, byte *fout, int *offset );
 int     Huff_getBit( byte *fout, int *offset );
-int Huff_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize);
+int MSG_ReadBitsCompress(const byte* input, byte* outputBuf, int readsize);
 void MSG_initHuffman();
 
 //extern huffman_t clientHuffTables;

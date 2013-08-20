@@ -64,7 +64,7 @@ void Pmove_ExtendedTurnOn( void ){
 }
 
 
-DLL_PUBLIC __cdecl __optimize3 int Pmove_GetSpeed( playerState_t *ps ) {
+__cdecl __optimize3 int Pmove_GetSpeed( playerState_t *ps ) {
 
 	if(extendedMovementControl)
 		return svs.clients[ps->clientNum].playerMoveSpeed;
@@ -73,7 +73,7 @@ DLL_PUBLIC __cdecl __optimize3 int Pmove_GetSpeed( playerState_t *ps ) {
 
 }
 
-DLL_PUBLIC __cdecl __optimize3 int Pmove_GetGravity( playerState_t *ps ) {
+__cdecl __optimize3 int Pmove_GetGravity( playerState_t *ps ) {
 
 	int gravity;
 
@@ -86,7 +86,7 @@ DLL_PUBLIC __cdecl __optimize3 int Pmove_GetGravity( playerState_t *ps ) {
 }
 
 
-DLL_PUBLIC __cdecl __optimize3 float Jump_GetHeight( playerState_t *ps) {
+__cdecl __optimize3 float Jump_GetHeight( playerState_t *ps) {
 
 	if(extendedMovementControl)
 		return svs.clients[ps->clientNum].jumpHeight;
@@ -95,7 +95,7 @@ DLL_PUBLIC __cdecl __optimize3 float Jump_GetHeight( playerState_t *ps) {
 }
 
 
-DLL_PUBLIC __cdecl __optimize3 void Jump_ClampVelocity(playerState_t* ps, vec3_t vec){
+__cdecl __optimize3 void Jump_ClampVelocity(playerState_t* ps, vec3_t vec){
 
 	float comp;
 	float newZVelocity;
@@ -124,7 +124,7 @@ DLL_PUBLIC __cdecl __optimize3 void Jump_ClampVelocity(playerState_t* ps, vec3_t
 
 
 
-DLL_PUBLIC __cdecl __optimize3 qboolean Jump_IsPlayerAboveMax(playerState_t* ps){
+__cdecl __optimize3 qboolean Jump_IsPlayerAboveMax(playerState_t* ps){
 
 	float jumpHeight = Jump_GetHeight(ps);
 
@@ -137,7 +137,7 @@ DLL_PUBLIC __cdecl __optimize3 qboolean Jump_IsPlayerAboveMax(playerState_t* ps)
 
 
 
-DLL_PUBLIC __cdecl __optimize3 qboolean Jump_GetStepHeight(playerState_t* ps, const vec3_t vec1, float* val2){
+__cdecl __optimize3 qboolean Jump_GetStepHeight(playerState_t* ps, const vec3_t vec1, float* val2){
 
 	float jumpHeight = Jump_GetHeight(ps);
 
@@ -153,7 +153,7 @@ DLL_PUBLIC __cdecl __optimize3 qboolean Jump_GetStepHeight(playerState_t* ps, co
 
 }
 
-DLL_PUBLIC __cdecl __optimize3 float Jump_CalcHeight( playerState_t* ps ) {
+__cdecl __optimize3 float Jump_CalcHeight( playerState_t* ps ) {
 	
 	float val;
 	float newdiv;
@@ -183,7 +183,7 @@ DLL_PUBLIC __cdecl __optimize3 float Jump_CalcHeight( playerState_t* ps ) {
 	return val;
 }
 
-DLL_PUBLIC __cdecl __optimize3 void StuckInClient( gentity_t* gen )
+__cdecl __optimize3 void StuckInClient( gentity_t* gen )
 {
 
 }

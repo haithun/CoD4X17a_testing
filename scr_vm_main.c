@@ -643,7 +643,7 @@ void GScr_AddFieldsForClient()
 
 Bug in array - don't use!
 
-DLL_PUBLIC void Scr_GetClientField(gclient_t* gcl, int num)
+void Scr_GetClientField(gclient_t* gcl, int num)
 {
 
     client_fields_t *field = (client_fields_t *)0x8215780;
@@ -663,7 +663,7 @@ DLL_PUBLIC void Scr_GetClientField(gclient_t* gcl, int num)
 }
 
 
-DLL_PUBLIC void Scr_SetClientField(gclient_t* gcl, int num)
+void Scr_SetClientField(gclient_t* gcl, int num)
 {
     client_fields_t *field = (client_fields_t *)0x8215780;
 
@@ -683,7 +683,7 @@ DLL_PUBLIC void Scr_SetClientField(gclient_t* gcl, int num)
 */
 
 
-DLL_PUBLIC __cdecl void GScr_LoadScripts(void){
+__cdecl void GScr_LoadScripts(void){
 
     char mappath[MAX_QPATH];
     cvar_t* mapname;
@@ -739,7 +739,7 @@ typedef struct{
 #define scrStruct (*((scrStruct_t*)(SCRSTRUCT_ADDR)))
 
 
-DLL_PUBLIC __cdecl unsigned int Scr_LoadScript(const char* scriptname, PrecacheEntry *precache, int iarg_02){
+__cdecl unsigned int Scr_LoadScript(const char* scriptname, PrecacheEntry *precache, int iarg_02){
 
 	sval_u result;
 

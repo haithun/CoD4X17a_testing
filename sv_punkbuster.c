@@ -16,7 +16,7 @@
 //		Mandatory functions for PunkBuster operation
 /*********************************************************************************************/
 
-DLL_PUBLIC __cdecl int PbSvSendToAddrPort(char* netdest, unsigned short port, int msgsize, char* message){
+__cdecl int PbSvSendToAddrPort(char* netdest, unsigned short port, int msgsize, char* message){
 
 //    char *sourcemsg;
 //    char msg[256];
@@ -49,7 +49,7 @@ DLL_PUBLIC __cdecl int PbSvSendToAddrPort(char* netdest, unsigned short port, in
     return 0;
 }
 
-DLL_PUBLIC __cdecl int PbSvSendToClient(int msgsize, char* message, int clientnum){
+__cdecl int PbSvSendToClient(int msgsize, char* message, int clientnum){
     client_t *cl;
     cl = &svs.clients[clientnum];
 
@@ -80,7 +80,7 @@ DLL_PUBLIC __cdecl int PbSvSendToClient(int msgsize, char* message, int clientnu
 }
 
 
-DLL_PUBLIC __cdecl char* PbSvGameQuery(int para_01, char* string){
+__cdecl char* PbSvGameQuery(int para_01, char* string){
 
     int maxclients;
     client_t *cl;

@@ -36,6 +36,8 @@ If you have questions concerning this license or the applicable additional terms
 #define MAX_HUDELEMS 1024
 
 
+
+
 typedef struct
 {
     byte red;
@@ -126,8 +128,7 @@ typedef struct
 
 }game_hudelem_t; //Size: 0xac
 
-
-game_hudelem_t* g_hudelems = (game_hudelem_t*)(HUDELEM_ADDR);
+extern game_hudelem_t* g_hudelems;
 
 qboolean OnSameTeam( gentity_t *ent1, gentity_t *ent2 );
 qboolean Cmd_FollowClient_f(gentity_t *ent, int clientnum);
@@ -142,3 +143,5 @@ void G_HudDestroy(game_hudelem_t* element);
 
 
 #endif
+
+

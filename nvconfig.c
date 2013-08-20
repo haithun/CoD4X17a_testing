@@ -7,12 +7,12 @@
 #include "filesystem.h"
 #include "cmd.h"
 #include "server.h"
+#include "hl2rcon.h"
 
 #include <string.h>
 
 #define MAX_NVCONFIG_SIZE 2048*128
 
-#define NV_ConfigInit NV_LoadConfig
 #define NV_ProcessBegin NV_LoadConfig
 #define NV_ProcessEnd NV_WriteConfig
 

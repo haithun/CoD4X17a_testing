@@ -5,6 +5,7 @@
 #include "cvar.h"
 #include "sys_net.h"
 #include "sys_main.h"
+#include "server.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -443,10 +444,10 @@ qboolean SV_AddBan(int uid, int auid, char* guid, char* name, time_t expire, cha
     }else{
         if(type == 0){
             Com_Printf( "Modifying banrecord for player uid: %i\n", uid);
-            Cmd_PrintAdministrativeLog( "modified banrecord of player uid: %i:", uid);
+            SV_PrintAdministrativeLog( "modified banrecord of player uid: %i:", uid);
         }else{
             Com_Printf( "Modifying banrecord for player guid: %s\n", guid);
-            Cmd_PrintAdministrativeLog( "modified banrecord of player guid: %s:", guid);
+            SV_PrintAdministrativeLog( "modified banrecord of player guid: %s:", guid);
         }
     }
 
@@ -550,7 +551,7 @@ qboolean SV_RemoveBan(int uid, char* guid, char* name){
         }
 
         Com_Printf("Removing ban for Nick: %s, UID: %i, GUID: %s, Banreason: %s\n", printnick, this->playeruid, printguid, banreason);
-        Cmd_PrintAdministrativeLog("Removing ban for Nick: %s, UID: %i, GUID: %s, Banreason: %s\n", printnick, this->playeruid, printguid, banreason);
+        SV_PrintAdministrativeLog("Removing ban for Nick: %s, UID: %i, GUID: %s, Banreason: %s\n", printnick, this->playeruid, printguid, banreason);
     }
     if(succ)
         SV_WriteBanlist();

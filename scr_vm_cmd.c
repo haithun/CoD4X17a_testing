@@ -70,7 +70,7 @@ qboolean Scr_RemoveFunction( const char *cmd_name ) {
 Scr_GetFunction
 ============
 */
-DLL_PUBLIC __cdecl void* Scr_GetFunction( const char** v_functionName, qboolean* v_developer ) {
+__cdecl void* Scr_GetFunction( const char** v_functionName, qboolean* v_developer ) {
 
 	scr_function_t  *cmd;
 
@@ -147,7 +147,7 @@ qboolean Scr_RemoveMethod( const char *cmd_name ) {
 Scr_GetMethod
 ============
 */
-DLL_PUBLIC __cdecl void* Scr_GetMethod( const char** v_functionName, qboolean* v_developer ) {
+__cdecl void* Scr_GetMethod( const char** v_functionName, qboolean* v_developer ) {
 
 	scr_function_t  *cmd;
 

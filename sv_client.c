@@ -26,6 +26,29 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
+#include "q_shared.h"
+#include "qcommon_io.h"
+#include "qcommon_mem.h"
+#include "qcommon.h"
+#include "huffman.h"
+#include "msg.h"
+#include "server.h"
+#include "net_game_conf.h"
+#include "misc.h"
+#include "g_sv_shared.h"
+#include "plugin_events.h"
+#include "q_platform.h"
+#include "sys_main.h"
+#include "punkbuster.h"
+#include "scr_vm.h"
+#include "cmd.h"
+#include "sys_thread.h"
+#include "hl2rcon.h"
+
+#include <stdint.h>
+#include <stdarg.h>
+#include <string.h>
+
 //AntiDoS
 /*
 int SV_ChallengeCookies(netadr_t from){
@@ -199,7 +222,7 @@ challengeResponse to it
 */
 __optimize3 __regparm1 void SV_AuthorizeIpPacket( netadr_t *from ) {
 	int	challenge;
-	int	i, k;
+	int	i;
 	char	*s;
 	char	*r;
 	char	*p;
@@ -255,15 +278,6 @@ __optimize3 __regparm1 void SV_AuthorizeIpPacket( netadr_t *from ) {
 	}
 
 	if (!Q_stricmp( s, "deny" )) {
-
-		for(k = 0; k < MAX_STREAM_SERVERS; k++){//Simple deny
-			if(sv_streamServerAddr[k].type != NA_IP || from->type != NA_IP) break;
-			if(NET_CompareBaseAdrMask(&svse.challenges[i].adr, &sv_streamServerAddr[k], 24)){
-				NET_OutOfBandPrint( NS_SERVER, &svse.challenges[i].adr, "error\nEXE_ERR_CDKEY_IN_USE" );
-				Com_Memset( &svse.challenges[i], 0, sizeof( svse.challenges[i] ));
-				return;
-			}
-		}
 
 		svse.challenges[i].ipAuthorize = -1;
 		if(!Q_stricmp(r, "CLIENT_UNKNOWN_TO_AUTH")){
@@ -472,7 +486,7 @@ __optimize3 __regparm1 void SV_DirectConnect( netadr_t *from ) {
 			}
 		}
 	}
-	if(*g_password->string && Q_strncmp(g_password->string, password, 32)){
+	if(*sv_password->string && Q_strncmp(sv_password->string, password, 32)){
 		NET_OutOfBandPrint( NS_SERVER, from, "error\nThis server has set a join-password\n^1Invalid Password\n");
 		Com_Printf("Connection rejected from %s - Invalid Password\n", NET_AdrToString(from));
 		Com_Memset( &svse.challenges[c], 0, sizeof( svse.challenges[c] ));
@@ -480,7 +494,7 @@ __optimize3 __regparm1 void SV_DirectConnect( netadr_t *from ) {
 	}
 	//Process queue
 	for(i = 0 ; i < 10 ; i++){//Purge all older players from queue
-	    if(svse.connectqueue[i].lasttime+21 < realtime){
+	    if(svse.connectqueue[i].lasttime+21 < Com_GetRealtime()){
 		svse.connectqueue[i].lasttime = 0;
 		svse.connectqueue[i].firsttime = 0;
 		svse.connectqueue[i].challengeslot = 0;
@@ -537,10 +551,10 @@ __optimize3 __regparm1 void SV_DirectConnect( netadr_t *from ) {
 		    svse.connectqueue[i].attempts = 0;
 		}
 		if(svse.connectqueue[i].firsttime == 0){
-		    svse.connectqueue[i].firsttime = realtime;
+		    svse.connectqueue[i].firsttime = Com_GetRealtime();
 		}
 		svse.connectqueue[i].attempts++;
-		svse.connectqueue[i].lasttime = realtime;
+		svse.connectqueue[i].lasttime = Com_GetRealtime();
 		svse.connectqueue[i].challengeslot = c;
 		return;
 	}
@@ -581,10 +595,10 @@ __optimize3 __regparm1 void SV_DirectConnect( netadr_t *from ) {
         Plugin_Event(PLUGINS_ONPLAYERCONNECT, clientNum, from, newcl->originguid, userinfo, newcl->authentication, &denied);
 
         if(!psvs.useuids)
-            denied = CL_IsBanned(0, newcl->pbguid, *from);
+            denied = SV_PlayerIsBanned(0, newcl->pbguid, *from);
 
         else if(newcl->uid != 0)
-            denied = CL_IsBanned(newcl->uid, NULL, *from);
+            denied = SV_PlayerIsBanned(newcl->uid, NULL, *from);
 
         if(denied){
                 NET_OutOfBandPrint( NS_SERVER, from, "error\n%s", denied);
@@ -859,7 +873,7 @@ or unwillingly.  This is NOT called if the entire server is quiting
 or crashing -- SV_FinalMessage() will handle that
 =====================
 */
-DLL_PUBLIC __cdecl void SV_DropClient( client_t *drop, const char *reason ) {
+__cdecl void SV_DropClient( client_t *drop, const char *reason ) {
 	int i;
 	int clientnum;
 	char var_01[2];
@@ -1143,10 +1157,6 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd ) {
 	if(client->netchan.remoteAddress.type != NA_BOT && ((sv_pure->integer != 0 && client->pureAuthentic == 0) || !psvs.serverAuth))
 		return;
 */
-	if(client->netchan.remoteAddress.type != NA_BOT && !psvs.serverAuth)
-		return;
-
-
 	Com_DPrintf( "Going from CS_PRIMED to CS_ACTIVE for %s\n", client->name );
 	client->state = CS_ACTIVE;
 
@@ -1411,9 +1421,9 @@ char* SV_IsGUID(char* GUID){
 }
 
 
-int SV_GetUid(int clnum){
+int SV_GetUid(unsigned int clnum){
 
-    if(clnum > 63 || clnum < 0)
+    if(clnum > 63)
         return -1;
 
     client_t *cl = &svs.clients[clnum];
@@ -1489,7 +1499,7 @@ Fill up msg with data
 ==================
 */
 
-DLL_PUBLIC __cdecl void SV_WriteDownloadToClient( client_t *cl, msg_t *msg ) {
+__cdecl void SV_WriteDownloadToClient( client_t *cl, msg_t *msg ) {
 	int curindex;
 	char errorMessage[1024];
 /*
@@ -1692,7 +1702,6 @@ the wrong gamestate.
 void SV_SendClientGameState( client_t *client ) {
 	msg_t msg;
 	byte msgBuffer[MAX_MSGLEN];
-	permServerStatic_t* sve = &psvs;
 
 	while(client->state != CS_FREE && client->netchan.unsentFragments){
 		SV_Netchan_TransmitNextFragment(client);
@@ -1740,9 +1749,6 @@ void SV_SendClientGameState( client_t *client ) {
 
 	// send the gamestate
 	SV_WriteGameState(&msg, client);
-
-	if(!sve->serverAuth)
-		SV_SendAuthRequest();
 
 	MSG_WriteLong( &msg, client - svs.clients );
 
@@ -2278,7 +2284,7 @@ void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK, qb
 SV_ClientCommand
 ===============
 */
-static qboolean SV_ClientCommand( client_t *cl, msg_t *msg, qboolean inDl) {
+qboolean SV_ClientCommand( client_t *cl, msg_t *msg, qboolean inDl) {
 	int seq;
 	const char  *s;
 	qboolean clientOk = qtrue;
@@ -2353,47 +2359,6 @@ static qboolean SV_ClientCommand( client_t *cl, msg_t *msg, qboolean inDl) {
 	return qtrue;       // continue procesing
 }
 
-void QDECL SV_EnterLeaveLog( const char *fmt, ... ) {
-
-	Sys_EnterCriticalSection(5);
-
-	va_list		argptr;
-	char		msg[MAXPRINTMSG];
-	char		inputmsg[MAXPRINTMSG];
-	struct tm 	*newtime;
-	char*		ltime;
-
-        // logfile
-	if ( com_logfile && com_logfile->integer ) {
-        // TTimo: only open the qconsole.log if the filesystem is in an initialized state
-        // also, avoid recursing in the qconsole.log opening (i.e. if fs_debug is on)
-
-	    va_start (argptr,fmt);
-	    Q_vsnprintf (inputmsg, sizeof(inputmsg), fmt, argptr);
-	    va_end (argptr);
-
-	    newtime = localtime( &realtime );
-	    ltime = asctime( newtime );
-	    ltime[strlen(ltime)-1] = 0;
-
-	    if ( !enterleavelogfile && FS_Initialized()) {
-
-			enterleavelogfile = FS_FOpenFileAppend( "enterleave.log" );
-			// force it to not buffer so we get valid
-			if ( enterleavelogfile ){
-				FS_ForceFlush(enterleavelogfile);
-				FS_Write(va("\nLogfile opened on %s\n\n", ltime), strlen(va("\nLogfile opened on %s\n\n", ltime)), enterleavelogfile);
-			}
-	    }
-
-	    if ( enterleavelogfile && FS_Initialized()) {
-		Com_sprintf(msg, sizeof(msg), "%s: %s\n", ltime, inputmsg);
-		FS_Write(msg, strlen(msg), enterleavelogfile);
-	    }
-
-	}
-	Sys_LeaveCriticalSection(5);
-}
 
 
 const char* SV_GetGuid( unsigned int clnum)

@@ -892,7 +892,7 @@ static void Cmd_ListPower_f() {
 Cmd_List_f
 ============
 */
-DLL_PUBLIC __cdecl void Cmd_List_f( void ) {
+__cdecl void Cmd_List_f( void ) {
 	cmd_function_t  *cmd;
 	int i;
 	char            *match;

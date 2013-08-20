@@ -73,19 +73,3 @@ sharedEntity_t *SV_GEntityForSvEntity( svEntity_t *svEnt ) {
 	num = svEnt - sv.svEntities;
 	return SV_GentityNum( num );
 }
-
-
-const char *SV_GetMapRotation(){
-
-	return sv_mapRotation->string;
-
-}
-
-
-const char *SV_GetNextMap(){
-
-	return sv_nextmap->string;
-
-}
-
-

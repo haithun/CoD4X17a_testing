@@ -1,7 +1,8 @@
 #include "q_shared.h"
 #include "sys_thread.h"
-//#include "filesystem.h"
 #include "qcommon_io.h"
+#include "qcommon_logprint.h"
+#include "qcommon.h"
 #include "sys_main.h"
 #include <string.h>
 #include <time.h>
@@ -15,14 +16,17 @@ void Sys_LeaveCriticalSection(int section){}
 
 #ifndef __SYS_MAIN_H__
 #define Sys_Print(x) fputs(x, stdout);
+#pragma message "Undefined function: Sys_Print"
 #endif
 
-#ifndef FS_PrintLogfile
-void FS_PrintLogfile( char* msg ){}
+#ifndef __QCOMMON_LOGPRINT_H__
+void Com_PrintLogfile( const char* msg ){}
+#pragma message "Undefined function: Com_PrintLogfile"
 #endif
 
-#ifndef Com_IsDeveloper
+#ifndef __QCOMMON_H__
 qboolean Com_IsDeveloper( void ){ return qtrue; }
+#pragma message "Undefined function: Com_IsDeveloper"
 #endif
 
 
@@ -70,7 +74,7 @@ void Com_StopRedirect (void)
 	rd_flush = NULL;
 }
 
-DLL_PUBLIC __cdecl void Com_PrintMessage( int dumbIWvar, char *msg, msgtype_t type) {
+__cdecl void Com_PrintMessage( int dumbIWvar, char *msg, msgtype_t type) {
 
 
 	if(dumbIWvar == 6) return;
@@ -103,7 +107,7 @@ DLL_PUBLIC __cdecl void Com_PrintMessage( int dumbIWvar, char *msg, msgtype_t ty
 	Sys_Print( msg );
 
 	// logfile
-	FS_PrintLogfile( msg );
+	Com_PrintLogfile( msg );
 }
 
 /*

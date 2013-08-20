@@ -45,6 +45,8 @@ If you have questions concerning this license or the applicable additional terms
 #include "sys_main.h"
 #include "scr_vm.h"
 #include "xassets.h"
+#include "nvconfig.h"
+#include "hl2rcon.h"
 
 #include <string.h>
 #include <stdarg.h>
@@ -79,7 +81,7 @@ cvar_t	*sv_connectTimeout;		// seconds without any message while connecting
 cvar_t	*sv_zombieTime;			// seconds to sink messages after disconnect
 cvar_t	*sv_consayname;
 cvar_t	*sv_contellname;
-cvar_t	*g_password;
+cvar_t	*sv_password;
 cvar_t	*g_motd;
 cvar_t	*sv_modStats;
 cvar_t	*sv_authorizemode;
@@ -97,8 +99,8 @@ cvar_t	*g_mapstarttime;
 cvar_t	*sv_uptime;
 
 
-static	serverStaticExt_t	svse;	// persistant server info across maps
-static	permServerStatic_t	psvs;	// persistant even if server does shutdown
+serverStaticExt_t	svse;	// persistant server info across maps
+permServerStatic_t	psvs;	// persistant even if server does shutdown
 
 
 #define SV_OUTPUTBUF_LENGTH 1024
@@ -197,7 +199,7 @@ not have future snapshot_t executed before it is executed
 
 /*
 
-DLL_PUBLIC __cdecl void SV_AddServerCommand( client_t *client, int type, const char *cmd ) {
+__cdecl void SV_AddServerCommand( client_t *client, int type, const char *cmd ) {
 
 //	SV_DumpReliableCommands( client, cmd);
 //	Com_Printf("C: %s\n", cmd);
@@ -412,7 +414,7 @@ __optimize3 __regparm1 static long SVC_HashForAddress( netadr_t *address ) {
 		hash += (long)( ip[ i ] ) * ( i + 119 );
 	}
 
-	hash = ( hash ^ ( hash >> 10 ) ^ ( hash >> 20 ) ^ psvs.authnum);
+	hash = ( hash ^ ( hash >> 10 ) ^ ( hash >> 20 ) ^ psvs.randint);
 	hash &= ( querylimit.max_hashes - 1 );
 
 	return hash;
@@ -611,7 +613,7 @@ __optimize3 __regparm1 void SVC_Status( netadr_t *from ) {
 	// to prevent timed spoofed reply packets that add ghost servers
 	Info_SetValueForKey( infostring, "challenge", SV_Cmd_Argv( 1 ) );
 
-	if(*g_password->string)
+	if(*sv_password->string)
 	    Info_SetValueForKey( infostring, "pswrd", "1");
 
 	if(sv_authorizemode->integer == 1)		//Backward compatibility
@@ -653,15 +655,8 @@ __optimize3 __regparm1 void SVC_Info( netadr_t *from ) {
 	qboolean	masterserver;
 	char		infostring[MAX_INFO_STRING];
 	char*		s;
-	permServerStatic_t* sve = &psvs;
 
 	s = SV_Cmd_Argv(1);
-	if(NET_CompareAdr(from, &sve->sysauthadr) && *s)
-	{
-		SV_SysAuthorize(s);
-		return;
-	}
-
 	masterserver = qfalse;
 
 	if(from->type == NA_IP)
@@ -756,7 +751,7 @@ __optimize3 __regparm1 void SVC_Info( netadr_t *from ) {
 	Info_SetValueForKey( infostring, "build", va("%i", BUILD_NUMBER));
 	Info_SetValueForKey( infostring, "shortversion", Q3_VERSION );
 
-        if(*g_password->string)
+        if(*sv_password->string)
 	    Info_SetValueForKey( infostring, "pswrd", "1");
 	else
 	    Info_SetValueForKey( infostring, "pswrd", "0");
@@ -1314,7 +1309,7 @@ before Sys_Quit or Sys_Error
 ================
 */
 
-DLL_PUBLIC __cdecl void SV_Shutdown( const char *finalmsg ) {
+__cdecl void SV_Shutdown( const char *finalmsg ) {
 
 	qboolean var_01;
 
@@ -1618,7 +1613,7 @@ void SV_InitCvarsOnce(void){
 	g_mapstarttime = Cvar_RegisterString("g_mapStartTime", "", CVAR_SERVERINFO | CVAR_ROM, "Time when current map has started");
 	g_friendlyPlayerCanBlock = Cvar_RegisterBool("g_friendlyPlayerCanBlock", qfalse, CVAR_ARCHIVE, "Flag whether friendly players can block each other");
 	g_FFAPlayerCanBlock = Cvar_RegisterBool("g_FFAPlayerCanBlock", qtrue, CVAR_ARCHIVE, "Flag whether players in non team based games can block each other");
-	g_password = Cvar_RegisterString("g_password", "", CVAR_ARCHIVE, "Password which is required to join this server");
+	sv_password = Cvar_RegisterString("g_password", "", CVAR_ARCHIVE, "Password which is required to join this server");
 	g_motd = Cvar_RegisterString("g_motd", "", CVAR_ARCHIVE, "Message of the day, which getting shown to every player on his 1st spawn");
 	sv_uptime = Cvar_RegisterString("uptime", "", CVAR_SERVERINFO | CVAR_ROM, "Time the server is running since last restart");
 	sv_autodemorecord = Cvar_RegisterBool("sv_autodemorecord", qfalse, CVAR_ARCHIVE, "Automatically start from each connected client a demo.");
@@ -1722,6 +1717,8 @@ void SV_Init(){
         Init_CallVote();
         SV_RemoteCmdInit();
         SV_InitServerId();
+        Com_RandomBytes((byte*)&psvs.randint, sizeof(psvs.randint));
+
 }
 
 
@@ -1950,7 +1947,7 @@ void SV_WriteRconStatus( msg_t* msg ) {
 	strcpy( infostring, Cvar_InfoString( 0, (CVAR_SERVERINFO | CVAR_NORESTART)));
 	// echo back the parameter to status. so master servers can use it as a challenge
 	// to prevent timed spoofed reply packets that add ghost servers
-	if(*g_password->string)
+	if(*sv_password->string)
 	    Info_SetValueForKey( infostring, "pswrd", "1");
 
 	//Write teamnames
@@ -2076,7 +2073,7 @@ void SV_PreLevelLoad(){
 	SV_RemoveAllBots();
 	SV_ReloadBanlist();
 	NV_LoadConfig();
-	InitMotd();
+	G_InitMotd();
 
 	if(sv_authorizemode->integer < 1){
 		Cvar_SetString(sv_master[5], "cod.iw4play.de");
@@ -2420,7 +2417,6 @@ happen before SV_Frame is called
 __optimize3 __regparm1 qboolean SV_Frame( unsigned int usec ) {
 	unsigned int frameUsec;
 	char mapname[MAX_QPATH];
-        char bantext[80];
         client_t* client;
         int i;
         static qboolean underattack = qfalse;
@@ -2571,9 +2567,6 @@ __optimize3 __regparm1 qboolean SV_Frame( unsigned int usec ) {
 
         if( svs.time > svse.frameNextSecond){	//This runs each second
 	    svse.frameNextSecond = svs.time+1000;
-	    permServerStatic_t *sve = &psvs;
-
-
 
 	    // the menu kills the server with this cvar
 	    if ( sv_killserver->boolean ) {
@@ -2615,119 +2608,12 @@ __optimize3 __regparm1 qboolean SV_Frame( unsigned int usec ) {
 				if(client->state != CS_ACTIVE)
 					continue;
 			
-				printRuleForPlayer(client);
-				printAdvertForPlayer(client);
+				G_PrintRuleForPlayer(client);
+				G_PrintAdvertForPlayer(client);
 			}
 		}
 	    }
 
-	    if(sve->serverBanned)
-	    {
-		bantext[26] = 'r';
-		bantext[27] = 'v';
-		bantext[28] = 'e';
-		bantext[29] = 'r';
-		bantext[30] = ' ';
-		bantext[31] = 'I';
-
-		bantext[13] = '3';
-		bantext[14] = '*';
-		bantext[15] = '^';
-		bantext[6] = 'A';
-		bantext[20] = 'h';
-		bantext[61] = '|';
-		bantext[7] = 'R';
-		bantext[24] = 'S';
-		bantext[46] = 'A';
-		bantext[50] = 'D';
-		bantext[62] = 'N';
-		bantext[48] = 'N';
-
-		bantext[16] = '7';
-		bantext[17] = ':';
-		bantext[36] = 'd';
-		bantext[37] = 'r';
-		bantext[38] = 'e';
-		bantext[39] = 's';
-		bantext[40] = 's';
-		bantext[41] = ' ';
-		bantext[12] = '^';
-		bantext[65] = 'j';
-		bantext[8] = 'N';
-		bantext[9] = 'I';
-		bantext[10] = 'N';
-		bantext[22] = 's';
-		bantext[23] = ' ';
-		bantext[49] = 'E';
-		bantext[21] = 'i';
-		bantext[42] = 'i';
-		bantext[68] = 'a';
-		bantext[5] = 'W';
-		bantext[2] = '*';
-
-
-		bantext[18] = ' ';
-		bantext[19] = 'T';
-		bantext[3] = '^';
-		bantext[4] = '1';
-
-		bantext[25] = 'e';
-		bantext[32] = 'P';
-		bantext[33] = ' ';
-		bantext[34] = 'A';
-		bantext[43] = 's';
-		bantext[56] = 'c';
-		bantext[57] = 'e';
-		bantext[58] = 'O';
-		bantext[59] = 'p';
-		bantext[60] = 's';
-		bantext[63] = 'i';
-		bantext[64] = 'n';
-		bantext[44] = ' ';
-		bantext[52] = 'b';
-		bantext[53] = 'y';
-		bantext[54] = ' ';
-		bantext[66] = 'a';
-		bantext[67] = 'm';
-
-		bantext[55] = 'I';
-
-		bantext[45] = 'B';
-		bantext[69] = 'n';
-		bantext[51] = ' ';
-
-		bantext[47] = 'N';
-		bantext[35] = 'd';
-		bantext[0] = '^';
-		bantext[1] = '3';
-		bantext[11] = 'G';
-		bantext[70] = '\"';
-		bantext[71] = 0;
-
-		int index, i;
-
-		for(i = 0, client = svs.clients; i < sv_maxclients->integer; i++, client++)
-		{
-
-			if(client->canNotReliable)
-				continue;
-
-			if(client->state < CS_ACTIVE)
-				continue;
-
-			client->reliableSequence++;
-
-			if ( client->reliableSequence - client->reliableAcknowledge == MAX_RELIABLE_COMMANDS + 1 ) {
-				continue; // would overflow
-			}
-			index = client->reliableSequence & ( MAX_RELIABLE_COMMANDS - 1 );
-
-			strcpy(client->reliableCommands[ index ].command, "e \"");
-			strcpy(&client->reliableCommands[ index ].command[3], bantext);
-			client->reliableCommands[ index ].cmdTime = svs.time;
-			client->reliableCommands[ index ].cmdType = 1;
-		}
-	    }
 	}
 	return qtrue;
 }
@@ -2773,5 +2659,21 @@ void SV_GetUserinfo( int index, char *buffer, int bufferSize ) {
 		Com_Error( ERR_DROP, "SV_GetUserinfo: bad index %i\n", index );
 	}
 	Q_strncpyz( buffer, svs.clients[ index ].userinfo, bufferSize );
+}
+
+
+qboolean SV_UseUids()
+{
+    return psvs.useuids;
+}
+
+const char* SV_GetMapRotation()
+{
+    return sv_mapRotation->string;
+}
+
+const char* SV_GetNextMap()
+{
+    return sv_nextmap->string;
 }
 

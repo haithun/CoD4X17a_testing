@@ -95,19 +95,6 @@ typedef enum {
 }username_t;
 
 
-typedef enum{
-	CAU_NEEDHWINFO,
-	CAU_GOTGUIDHWINFO,
-	CAU_REQUESTEDUID,
-	CAU_GOTUID,
-	CAU_REQUESTEDUSERINFO,
-	CAU_GOTUSERINFO,
-	CAU_GUIDUPDATED,
-	CAU_FINISHED,
-	CAU_BAD
-}authorizeState_t;
-
-
 typedef struct client_s {//90b4f8c
 	clientState_t		state;
 	int			unksnapshotvar;		// must timeout a few frames in a row so debugging doesn't break
@@ -125,11 +112,7 @@ typedef struct client_s {//90b4f8c
 
 	int			pbfailcounter;
 	int			authentication;
-	authorizeState_t	authstate;
 	qboolean		playerauthorized;
-	qboolean		uidRequestSent;
-	qboolean		userinfoRequestSent;
-	qboolean		guidupdated;
 	qboolean		noPb;
 	username_t		usernamechanged;
 	int			bantime;
@@ -332,12 +315,8 @@ typedef struct {
 }serverStaticExt_t;
 
 typedef struct {
-	qboolean		serverBanned;
-	netadr_t		sysauthadr;
-	qboolean		serverAuth;
 	qboolean		cmdSystemInitialized;
-	int			feed;
-	int			authnum;
+	int			randint;
 	translatedCmds_t	translatedCmd[MAX_TRANSCMDS];
 	int			challenge;
 	int			useuids;
@@ -452,8 +431,6 @@ void SV_PBAuthChallengeResponse( int );
 
 void SV_Heartbeat_f( void );
 
-//void SV_AuthorizeIpPacket( netadr_t from, const char *argstr, ...);
-
 void SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean clientOK, qboolean inDl );
 
 void SV_SendClientSnapshot( client_t *cl );
@@ -470,21 +447,19 @@ void Scr_SpawnBot(void);
 
 char*	SV_IsGUID(char* guid);
 
-void Cmd_PrintAdministrativeLog( const char* fmt,...);
-
 void SV_Shutdown( const char* finalmsg);
 
 void SV_WriteGameState(msg_t*, client_t*);
 
 void SV_GetServerStaticHeader(void);
 
+
 void SV_WriteDemoMessageForClient( byte *msg, int dataLen, client_t *client );
-
 void SV_StopRecord( client_t *cl );
-
 void SV_RecordClient( client_t* cl, char* basename );
-
 void SV_DemoSystemShutdown( void );
+void SV_WriteDemoArchive(client_t *client);
+
 
 void SV_InitCvarsOnce( void );
 
@@ -563,9 +538,23 @@ void SV_ExecuteBroadcastedCmd(int uid, const char *msg);
 qboolean SV_RemoteCmdAddAdmin(int uid, char* guid, int power);
 qboolean SV_RemoteCmdInfoAddAdmin(const char* infostring);
 void SV_RemoteCmdWriteAdminConfig(char* buffer, int size);
+void QDECL SV_PrintAdministrativeLog( const char *fmt, ... );
 
 extern cvar_t* sv_padPackets;
 extern cvar_t* sv_demoCompletedCmd;
+extern cvar_t* sv_wwwBaseURL;
+extern cvar_t* sv_maxPing;
+extern cvar_t* sv_minPing;
+extern cvar_t* sv_authorizemode;
+extern cvar_t* sv_privateClients;
+extern cvar_t* sv_privatePassword;
+extern cvar_t* sv_reconnectlimit;
+extern cvar_t* sv_wwwDlDisconnected;
+extern cvar_t* sv_allowDownload;
+extern cvar_t* sv_wwwDownload;
+extern cvar_t* sv_autodemorecord;
+extern cvar_t* sv_modStats;
+extern cvar_t* sv_password;
 
 void __cdecl SV_StringUsage_f(void);
 void __cdecl SV_ScriptUsage_f(void);
@@ -591,9 +580,20 @@ void __cdecl SV_UnlinkEntity(gentity_t*);
 
 void __cdecl SV_AddServerCommand_old(client_t *client, int unkownzeroorone, const char *);
 
+//sv_banlist.c
 void SV_InitBanlist( void );
 qboolean  SV_ReloadBanlist();
 char* SV_PlayerIsBanned(int uid, char* pbguid, netadr_t addr);
+char* SV_PlayerBannedByip(netadr_t *netadr);	//Gets called in SV_DirectConnect
+void SV_PlayerAddBanByip(netadr_t remote, char *reason, int uid, int adminuid, int expire);		//Gets called by future implemented ban-commands and if a prior ban got enforced again - This function can also be used to unset bans by setting 0 bantime
+
+
+
+extern	serverStaticExt_t	svse;	// persistant server info across maps
+extern	permServerStatic_t	psvs;	// persistant even if server does shutdown
+
+__cdecl void SV_UpdateServerCommandsToClient( client_t *client, msg_t *msg );
+__cdecl void SV_SendMessageToClient( msg_t *msg, client_t *client );
 
 #endif
 

@@ -6,6 +6,9 @@
 
 
 unsigned int Sys_Milliseconds( void );
+unsigned long long Sys_MillisecondsLong( void );
+unsigned long long Sys_MicrosecondsLong( void );
+
 void Sys_TimerInit( void );
 unsigned long long Sys_Microseconds( void );
 int Sys_Seconds( void );
@@ -17,7 +20,7 @@ char *Sys_ConsoleInput(void);
 void Sys_AnsiColorPrint( const char *msg );
 void Sys_PrintBinVersion( const char* name );
 void Sys_ParseArgs( int argc, char* argv[] );
-__cdecl DLL_PUBLIC void QDECL Sys_Error( const char *fmt, ... );
+__cdecl void QDECL Sys_Error( const char *fmt, ... );
 void Sys_SetBinaryPath(const char *path);
 char *Sys_BinaryPath(void);
 void Sys_SetDefaultInstallPath(const char *path);

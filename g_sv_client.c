@@ -37,7 +37,7 @@ If you have questions concerning this license or the applicable additional terms
 #include <string.h>
 #include <stdlib.h>
 
-DLL_PUBLIC __cdecl void ClientSpawn(gentity_t* ent, vec3_t* px, vec3_t* py)
+__cdecl void ClientSpawn(gentity_t* ent, vec3_t* px, vec3_t* py)
 {
 
 //    ent->client->ps.gravity = 800;//(int)g_gravity->value;
@@ -330,7 +330,7 @@ The game can override any of the settings and call trap_SetUserinfo
 if desired.
 ============
 */
-DLL_PUBLIC void ClientUserinfoChanged( int clientNum ) {
+__cdecl void ClientUserinfoChanged( int clientNum ) {
 
 	gentity_t *ent;
 	char    *s;

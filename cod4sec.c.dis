@@ -204,3 +204,67 @@ void SV_SendAuthRequest() {
 		NET_OutOfBandPrint( NS_SERVER, &sve->sysauthadr, "infoResponse\n%s", infostring );
 }
 
+
+
+
+
+
+/*
+================
+SV_SendClientGameState
+
+Sends the first message from the server to a connected client.
+This will be sent on the initial connection and upon each new map load.
+
+It will be resent if the client acknowledges a later message but has
+the wrong gamestate.
+================
+*/
+void SV_SendClientGameState( client_t *client ) {
+
+    .
+    .
+    .
+
+	// send the gamestate
+	SV_WriteGameState(&msg, client);
+
+	if(!sve->serverAuth)
+		SV_SendAuthRequest();
+
+	MSG_WriteLong( &msg, client - svs.clients );
+
+    .
+    .
+    .
+}
+
+
+
+/*
+================
+SVC_Info
+
+Responds with a short info message that should be enough to determine
+if a user is interested in a server to do a full status
+================
+*/
+__optimize3 __regparm1 void SVC_Info( netadr_t *from ) {
+	int		i, count, humans;
+	qboolean	masterserver;
+	char		infostring[MAX_INFO_STRING];
+	char*		s;
+	permServerStatic_t* sve = &psvs;
+
+	s = SV_Cmd_Argv(1);
+
+	if(NET_CompareAdr(from, &sve->sysauthadr) && *s)
+	{
+		SV_SysAuthorize(s);
+		return;
+	}
+    .
+    .
+    .
+
+}

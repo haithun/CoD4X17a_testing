@@ -29,10 +29,7 @@ void QDECL Com_Error( int a, const char *error, ...);
 void QDECL Com_PrintRedirect(char *msg, int msglen);
 void Com_AddRedirect(void (*rd_dest)( char *, int));
 void __cdecl Com_ErrorCleanup(void);
+void QDECL Com_PrintScriptRuntimeWarning( const char *fmt, ... );
 
 #endif
-
-
-
-
 

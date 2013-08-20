@@ -151,7 +151,6 @@ void Cvar_Init(void);
 #define g_gametype getcvaradr(0x13ed89bc)
 #define sv_pure getcvaradr(0x13ed89d0)
 #define sv_fps getcvaradr(0x13ed8950)
-#define com_developer getcvaradr(0x88a6184)
 #define useFastfiles getcvaradr(0x88a6170)
 #define com_logfile getcvaradr(0x88a61b0)
 #define com_developer_script getcvaradr(0x88a6188)

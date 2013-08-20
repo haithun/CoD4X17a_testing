@@ -86,7 +86,7 @@ void Init_CallVote(void){
 Cmd_CallVote_f
 ==================
 */
-DLL_PUBLIC __cdecl void Cmd_CallVote_f( gentity_t *ent ) {
+__cdecl void Cmd_CallVote_f( gentity_t *ent ) {
 	int i, activePlayers;
 	char arg1[MAX_STRING_TOKENS];
 	char arg2[MAX_STRING_TOKENS];
@@ -390,7 +390,7 @@ This function is required for refollowing facility on spawn
 =================
 */
 
-DLL_PUBLIC __cdecl void StopFollowingOnDeath( gentity_t *ent ) {
+__cdecl void StopFollowingOnDeath( gentity_t *ent ) {
 
 	if(ent->client->sess.spectatorClient != -1)
 		ent->client->sess.lastFollowedClient = ent->client->sess.spectatorClient; //saving the last followed player

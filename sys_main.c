@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "sys_main.h"
 #include "q_platform.h"
 #include "qcommon_io.h"
+#include "qcommon_logprint.h"
 #include "qcommon.h"
 #include "sys_cod4defs.h"
 #include "sys_con_tty.h"
@@ -122,7 +123,7 @@ Sys_Microseconds
 	 0x7fffffff ms - ~24 days
    although timeval:tv_usec is an int, I'm not sure wether it is actually used as an unsigned int
 	 (which would affect the wrap period) */
-unsigned long long Sys_Microseconds( void ) {
+unsigned long long Sys_MicrosecondsLong( void ) {
 	struct timeval tp;
 	unsigned long long orgtime;
 	unsigned long long time;
@@ -228,7 +229,7 @@ void Sys_SigHandler( int signal )
 
 		Sys_EnterCriticalSection( 2 );
 
-		FS_CloseLogFiles(); //close all open logfiles
+		Com_CloseLogFiles(); //close all open logfiles
 		FS_Shutdown(qtrue);
 	}
 
@@ -312,7 +313,7 @@ Sys_Error
 A raw string should NEVER be passed as fmt, because of "%f" type crashers.
 =============
 */
-__cdecl DLL_PUBLIC void QDECL Sys_Error( const char *fmt, ... ) {
+__cdecl void QDECL Sys_Error( const char *fmt, ... ) {
 
 	FILE * fdout;
 	char* fileout = "sys_error.txt";
@@ -406,7 +407,7 @@ char *Sys_DefaultAppPath(void)
 
 
 
-DLL_PUBLIC __cdecl int main(int argc, char* argv[]){
+__cdecl int main(int argc, char* argv[]){
 
     int i;
     char commandLine[MAX_STRING_CHARS] = { 0 };

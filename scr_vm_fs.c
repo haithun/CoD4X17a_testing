@@ -110,7 +110,7 @@ int Scr_FS_ReadLine( void *buffer, int len, fileHandle_t f ) {
 		if(feof(scr_fsh[f -1].fh)) 
 			return 0;
 
-		Scr_PrintScriptRuntimeWarning("Scr_FS_ReadLine: couldn't read line");
+		Com_PrintScriptRuntimeWarning("Scr_FS_ReadLine: couldn't read line");
 		return -1;
 	}
 	return 1;
@@ -138,7 +138,7 @@ qboolean Scr_FS_AlreadyOpened( char* qpath, char* filename, size_t fnamelen){
     for(i = 0; i < MAX_SCRIPT_FILEHANDLES; i++){
 
         if(!Q_stricmp(filename, scr_fsh[i].filename)){
-            Scr_PrintScriptRuntimeWarning("Script_FileOpen: Tried to open a file with the same name two times: %s\n", filename);
+            Com_PrintScriptRuntimeWarning("Script_FileOpen: Tried to open a file with the same name two times: %s\n", filename);
             *filename = 0;
             return qtrue;
         }
@@ -266,7 +266,7 @@ fileHandle_t Scr_OpenScriptFile( char* qpath, scr_fileHandleType_t ft, fsMode_t 
         }
     }
 
-    Scr_PrintScriptRuntimeWarning("Scr_OpenScriptFile: Exceeded limit of %i opened files\n", MAX_SCRIPT_FILEHANDLES);
+    Com_PrintScriptRuntimeWarning("Scr_OpenScriptFile: Exceeded limit of %i opened files\n", MAX_SCRIPT_FILEHANDLES);
 
     return 0;
 }

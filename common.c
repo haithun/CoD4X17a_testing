@@ -1,6 +1,7 @@
 #include "q_shared.h"
 #include "qcommon_io.h"
 #include "qcommon_parsecmdline.h"
+#include "qcommon_logprint.h"
 #include "sys_cod4defs.h"
 #include "cvar.h"
 #include "filesystem.h"
@@ -17,6 +18,7 @@
 #include "scr_vm.h"
 #include "netchan.h"
 #include "server.h"
+#include "nvconfig.h"
 
 #include <string.h>
 #include <setjmp.h>
@@ -38,7 +40,7 @@ cvar_t* com_timescale;
 cvar_t* com_fixedtime;
 cvar_t* com_maxFrameTime;
 cvar_t* com_animCheck;
-
+cvar_t* com_developer;
 
 /*
 ========================================================================
@@ -47,7 +49,6 @@ EVENT LOOP
 
 ========================================================================
 */
-
 
 typedef union{
     float f;
@@ -385,6 +386,14 @@ void Com_TimedEventLoop( void ) {
 }
 
 
+int Com_IsDeveloper()
+{
+    if(com_developer && com_developer->integer)
+        return com_developer->integer;
+
+    return 0;
+
+}
 
 /*
 =============
@@ -506,7 +515,7 @@ void Com_Quit_f( void ) {
 
 		Com_Close();
 
-		FS_CloseLogFiles( );
+		Com_CloseLogFiles( );
 
 		FS_Shutdown(qtrue);
 		FS_ShutdownIwdPureCheckReferences();
@@ -545,8 +554,10 @@ void Com_InitCvars( void ){
     //AuthServer
     //MasterServerPort
     //AuthServerPort
+    com_developer = Cvar_RegisterInt("developer", 0, 0, 2, 0, "Enable development options");
     tmp = (cvar_t**)(0x88a6184);
-    *tmp = Cvar_RegisterInt ("developer", 0, 0, 2, 0, "Enable development options");
+    *tmp = com_developer;
+
     tmp = (cvar_t**)(0x88a6188);
     *tmp = Cvar_RegisterBool ("developer_script", qfalse, 16, "Enable developer script comments");
     tmp = (cvar_t**)(0x88a61b0);

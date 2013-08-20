@@ -243,11 +243,6 @@ typedef struct
 }client_fields_t;
 
 
-
-
-void QDECL Scr_PrintScriptRuntimeWarning(const char* fmt,...);
-
-
 void __cdecl Scr_InitVariables(void);			//VM
 void __cdecl Scr_Init(void);			//VM_Init
 void __cdecl Scr_Settings(int, int, int);
@@ -314,17 +309,16 @@ void __cdecl Scr_ConstructMessageString( int, int, const char*, char*, unsigned 
 qboolean Scr_PlayerSay(gentity_t*, int mode, const char* text);
 void GScr_LoadGameTypeScript(void);
 unsigned int Scr_LoadScript(const char* scriptname, PrecacheEntry *precache, int iarg_02);
-void QDECL Scr_PrintScriptRuntimeWarning(const char *fmt, ...);
 qboolean Scr_ExecuteMasterResponse(char* s);
 void Scr_AddStockFunctions(void);
 void Scr_AddStockMethods(void);
 
 qboolean Scr_AddFunction( const char *cmd_name, xfunction_t function, qboolean developer);
 qboolean Scr_RemoveFunction( const char *cmd_name );
-DLL_PUBLIC __cdecl void* Scr_GetFunction( const char** v_functionName, qboolean* v_developer );
+__cdecl void* Scr_GetFunction( const char** v_functionName, qboolean* v_developer );
 qboolean Scr_AddMethod( const char *cmd_name, xfunction_t function, qboolean developer);
 qboolean Scr_RemoveMethod( const char *cmd_name );
-DLL_PUBLIC __cdecl void* Scr_GetMethod( const char** v_functionName, qboolean* v_developer );
+__cdecl void* Scr_GetMethod( const char** v_functionName, qboolean* v_developer );
 
 
 

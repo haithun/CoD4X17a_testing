@@ -33,6 +33,10 @@ If you have questions concerning this license or the applicable additional terms
 #include "scr_vm.h"
 
 
+
+game_hudelem_t* g_hudelems = (game_hudelem_t*)(HUDELEM_ADDR);
+
+
 game_hudelem_t* G_GetNewHudElem(unsigned int clientnum){
 
     int i;
@@ -198,3 +202,4 @@ void G_HudDestroy(game_hudelem_t* element){
     element->inuse = qfalse;
 
 }
+

@@ -512,7 +512,8 @@ NET_OutOfBandPrint
 Sends a text message in an out-of-band datagram
 ================
 */
-DLL_PUBLIC __cdecl void QDECL NET_OutOfBandPrint( netsrc_t sock, netadr_t *adr, const char *format, ... ) {
+
+__cdecl void QDECL NET_OutOfBandPrint( netsrc_t sock, netadr_t *adr, const char *format, ... ) {
 	va_list		argptr;
 	char		string[MAX_MSGLEN];
 

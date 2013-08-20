@@ -4,9 +4,9 @@
 #include "g_shared.h"
 #include "misc.h"
 #include "g_sv_shared.h"
+#include "hl2rcon.h"
 
-
-DLL_PUBLIC void ClientScr_SetSessionTeam(gclient_t* gcl, client_fields_t* gfl)
+__cdecl void ClientScr_SetSessionTeam(gclient_t* gcl, client_fields_t* gfl)
 {
 
     short index;
