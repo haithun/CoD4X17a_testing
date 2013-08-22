@@ -86,8 +86,6 @@ void		NET_FlushPacketQueue(void);
 qboolean	NET_SendPacket (netsrc_t sock, int length, const void *data, netadr_t *to);
 void		QDECL NET_OutOfBandPrint( netsrc_t net_socket, netadr_t *adr, const char *format, ...) __attribute__ ((format (printf, 3, 4)));
 void		QDECL NET_OutOfBandData( netsrc_t sock, netadr_t *adr, byte *format, int len );
-void		QDECL NET_PrintData( int *sock, const char *format, ... );
-void		NET_SendData( int *sock, byte *data, int len );
 void		NET_RegisterDefaultCommunicationSocket(netadr_t *adr);
 netadr_t*	NET_GetDefaultCommunicationSocket();
 qboolean	NET_CompareAdr (netadr_t *a, netadr_t *b);
@@ -116,7 +114,7 @@ qboolean	Sys_StringToAdr( const char *s, netadr_t *a, netadrtype_t family );
 //Does NOT parse port numbers, only base addresses.
 qboolean	Sys_IsLANAddress (netadr_t *adr);
 void		Sys_ShowIP(void);
-qboolean	NET_TCPSendData( int *sock, const void *data, int length );
+qboolean	NET_TCPSendData( int sock, const void *data, int length );
 
 
 

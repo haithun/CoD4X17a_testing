@@ -72,13 +72,13 @@ void HL2Rcon_SourceRconStreaming_enable( int type );
 qboolean HL2Rcon_AddSourceRconAdminToList(const char* username, const char* password, const char* salt, int power);
 void HL2Rcon_ClearSourceRconAdminList( void );
 void HL2Rcon_SourceRconDisconnect(netadr_t *from, int socketfd, int connectionId);
-tcpclientstate_t HL2Rcon_SourceRconAuth(netadr_t *from, msg_t *msg, int *socketfd, int *connectionId);
+tcpclientstate_t HL2Rcon_SourceRconAuth(netadr_t *from, msg_t *msg, int socketfd, int *connectionId);
 void HL2Rcon_SourceRconSendConsole( const char* data, int msglen);
 void HL2Rcon_SourceRconSendChat( const char* data, int clientnum);
 
 void HL2Rcon_SourceRconSendDataToEachClient( const byte* data, int msglen, int type);
 void HL2Rcon_SourceRconFlushRedirect(char* outputbuf, qboolean lastcommand);
-qboolean HL2Rcon_SourceRconEvent(netadr_t *from, msg_t *msg, int *socketfd, int connectionId);
+qboolean HL2Rcon_SourceRconEvent(netadr_t *from, msg_t *msg, int socketfd, int connectionId);
 void HL2Rcon_AddSourceAdminCommands();
 void HL2Rcon_SourceRconSendGameLog( const char* data, int msglen);
 void HL2Rcon_SourceRconSendChatToEachClient( const char *text, rconUser_t *self, int cid, qboolean onlyme);

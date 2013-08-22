@@ -300,7 +300,7 @@ void HL2Rcon_SourceRconDisconnect(netadr_t *from, int socketfd, int connectionId
 }
 
 
-tcpclientstate_t HL2Rcon_SourceRconAuth(netadr_t *from, msg_t *msg, int *socketfd, int *connectionId){
+tcpclientstate_t HL2Rcon_SourceRconAuth(netadr_t *from, msg_t *msg, int socketfd, int *connectionId){
 
 	int packetlen;
 	int packettype;
@@ -337,7 +337,10 @@ tcpclientstate_t HL2Rcon_SourceRconAuth(netadr_t *from, msg_t *msg, int *socketf
 	MSG_WriteLong(&sendmsg, 0);
 	MSG_WriteLong(&sendmsg, SERVERDATA_RESPONSE_VALUE);
 	MSG_WriteShort(&sendmsg, 0);
-	NET_SendData(socketfd, sendmsg.data, sendmsg.cursize);
+	if(NET_SendData(socketfd, sendmsg.data, sendmsg.cursize))
+	{
+		return TCP_AUTHBAD;
+	}
 
 	MSG_Init(&sendmsg, msgbuf, sizeof(msgbuf));
 	MSG_WriteLong(&sendmsg, 10);
@@ -388,7 +391,7 @@ tcpclientstate_t HL2Rcon_SourceRconAuth(netadr_t *from, msg_t *msg, int *socketf
 	user->remote = *from;
 	user->rconPower = login->power;
 	Q_strncpyz(user->rconUsername, login->username, sizeof(user->rconUsername));
-	user->socketfd = *socketfd;
+	user->socketfd = socketfd;
 	user->streamchat = 0;
 	user->streamlog = 0;
 	user->lastpacketid = packetid;
@@ -397,7 +400,10 @@ tcpclientstate_t HL2Rcon_SourceRconAuth(netadr_t *from, msg_t *msg, int *socketf
 	MSG_WriteLong(&sendmsg, user->lastpacketid);
 	MSG_WriteLong(&sendmsg, SERVERDATA_AUTH_RESPONSE);
 	MSG_WriteShort(&sendmsg, 0);
-	NET_SendData(socketfd, sendmsg.data, sendmsg.cursize);
+	if(NET_SendData(socketfd, sendmsg.data, sendmsg.cursize))
+	{
+		return TCP_AUTHBAD;
+	}
 
 	return TCP_AUTHSUCCESSFULL;
 
@@ -406,7 +412,7 @@ badrcon:
 	Cmd_EndTokenizeString();
 	Com_Printf ("Bad rcon from %s (TCP)\n", NET_AdrToString (from) );
 	//Don't allow another attempt for 20 seconds
-	SV_PlayerAddBanByip(*from, "Bad rcon", 0, 0, Com_GetRealtime() + 20);
+	SV_PlayerAddBanByip(from, "Bad rcon", 0, NULL, 0, Com_GetRealtime() + 20);
 
 	MSG_Init(&sendmsg, msgbuf, sizeof(msgbuf));
 	MSG_WriteLong(&sendmsg, 10);
@@ -478,7 +484,7 @@ void HL2Rcon_SourceRconSendDataToEachClient( const byte* data, int msglen, int t
 			*updatelen = msg.cursize - 4;
 			msgbuild = qtrue;
 		}
-		NET_SendData(&user->socketfd, msg.data, msg.cursize);
+		NET_SendData(user->socketfd, msg.data, msg.cursize);
 	}
 }
 
@@ -535,7 +541,7 @@ void HL2Rcon_SourceRconSendChatToEachClient( const char *text, rconUser_t *self,
 		updatelen = (int32_t*)msg.data;
 		*updatelen = msg.cursize - 4;
 
-		NET_SendData(&user->socketfd, msg.data, msg.cursize);
+		NET_SendData(user->socketfd, msg.data, msg.cursize);
 	}
 }
 
@@ -565,7 +571,7 @@ void HL2Rcon_SourceRconFlushRedirect(char* outputbuf, qboolean lastcommand){
 	updatelen = (int32_t*)msg.data;
 	*updatelen = msg.cursize - 4;
 
-	NET_SendData(&user->socketfd, msg.data, msg.cursize);
+	NET_SendData(user->socketfd, msg.data, msg.cursize);
 }
 
 
@@ -594,7 +600,7 @@ void HL2Rcon_SayToPlayers(int clientnum, int team, const char* chatline)
 }
 
 
-qboolean HL2Rcon_SourceRconEvent(netadr_t *from, msg_t *msg, int *socketfd, int connectionId){
+qboolean HL2Rcon_SourceRconEvent(netadr_t *from, msg_t *msg, int socketfd, int connectionId){
 
 	int packetlen;
 	int packettype;
@@ -641,7 +647,9 @@ qboolean HL2Rcon_SourceRconEvent(netadr_t *from, msg_t *msg, int *socketfd, int 
 		    //Adjust the length
 		    updatelen = (int32_t*)msg2.data;
 		    *updatelen = msg2.cursize - 4;
-		    NET_SendData(socketfd, msg2.data, msg2.cursize);
+		    if(NET_SendData(socketfd, msg2.data, msg2.cursize))
+			return qtrue;
+
 		    return qfalse;
 
 		case SERVERDATA_EXECCOMMAND:

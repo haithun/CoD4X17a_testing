@@ -1375,3 +1375,29 @@ char* Q_BitConv(int val){
 	buf[39] = 0;
 	return buf;
 }
+
+/*
+==================
+COM_DefaultExtension
+==================
+*/
+void COM_DefaultExtension( char *path, int maxSize, const char *extension ) {
+	char oldPath[MAX_QPATH];
+	char    *src;
+
+//
+// if path doesn't have a .EXT, append extension
+// (extension should include the .)
+//
+	src = path + strlen( path ) - 1;
+
+	while ( *src != '/' && src != path ) {
+		if ( *src == '.' ) {
+			return;                 // it has an extension
+		}
+		src--;
+	}
+
+	Q_strncpyz( oldPath, path, sizeof( oldPath ) );
+	Com_sprintf( path, maxSize, "%s%s", oldPath, extension );
+}

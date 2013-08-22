@@ -91,8 +91,6 @@ cvar_t	*g_friendlyPlayerCanBlock;
 cvar_t	*g_FFAPlayerCanBlock;
 cvar_t	*sv_autodemorecord;
 cvar_t	*sv_demoCompletedCmd;
-cvar_t	*sv_streamServer[MAX_STREAM_SERVERS];
-netadr_t sv_streamServerAddr[MAX_STREAM_SERVERS];
 
 cvar_t	*sv_master[MAX_MASTER_SERVERS];	// master server ip address
 cvar_t	*g_mapstarttime;
@@ -1635,25 +1633,6 @@ void SV_InitCvarsOnce(void){
 	sv_master[6] = Cvar_RegisterString("sv_master7", MASTER_SERVER_NAME, CVAR_ROM, "Default masterserver name");
 	sv_master[7] = Cvar_RegisterString("sv_master8", MASTER_SERVER_NAME2, CVAR_ROM, "Default masterserver name");
 
-	sv_streamServer[0] = Cvar_RegisterString("sv_streamServer1", "", CVAR_ARCHIVE, "A StreamServer name");
-	sv_streamServer[1] = Cvar_RegisterString("sv_streamServer2", "", CVAR_ARCHIVE, "A StreamServer name");
-	sv_streamServer[2] = Cvar_RegisterString("sv_streamServer3", "", CVAR_ARCHIVE, "A StreamServer name");
-	sv_streamServer[3] = Cvar_RegisterString("sv_streamServer4", "", CVAR_ARCHIVE, "A StreamServer name");
-	sv_streamServer[4] = Cvar_RegisterString("sv_streamServer5", "", CVAR_ARCHIVE, "A StreamServer name");
-	sv_streamServer[5] = Cvar_RegisterString("sv_streamServer6", "", CVAR_ARCHIVE, "A StreamServer name");
-
-	int index;
-
-	for(index = 0; index < MAX_STREAM_SERVERS; index++){
-
-		if(*sv_streamServer[index]->string){
-			NET_StringToAdr(sv_streamServer[index]->string, &sv_streamServerAddr[index], NA_IP);
-		}else{
-			Com_Memset(&sv_streamServerAddr[index], 0, sizeof(netadr_t));
-		}
-	}
-
-
 	tmp = (cvar_t**)(0x13ed89bc);
 	*tmp = Cvar_RegisterString("g_gametype", "war", 0x24, "Current game type");
 	tmp = (cvar_t**)(0x13ed8974);
@@ -2072,7 +2051,9 @@ void SV_PreLevelLoad(){
 	Plugin_Event(PLUGINS_ONEXITLEVEL, NULL);
 	SV_RemoveAllBots();
 	SV_ReloadBanlist();
+
 	NV_LoadConfig();
+
 	G_InitMotd();
 
 	if(sv_authorizemode->integer < 1){
@@ -2093,13 +2074,15 @@ void SV_PreLevelLoad(){
 			continue;
 		}
 
-		if(SV_PlayerIsBanned(client->uid, client->pbguid, client->netchan.remoteAddress)){
+		if(SV_PlayerIsBanned(client->uid, client->pbguid, &client->netchan.remoteAddress)){
 			SV_DropClient(client, "Prior kick/ban");
 			continue;
 		}
 	}
 	Pmove_ExtendedResetState();
+
 	HL2Rcon_EventLevelStart();
+
 }
 
 void SV_PostLevelLoad(){
@@ -2116,7 +2099,7 @@ SV_Map
 Restart the server on a different map
 ==================
 */
-static qboolean SV_Map( const char *levelname ) {
+qboolean SV_Map( const char *levelname ) {
 	char        *map;
 	char mapname[MAX_QPATH];
 	char expanded[MAX_QPATH];
@@ -2145,7 +2128,13 @@ static qboolean SV_Map( const char *levelname ) {
 
 	FS_ConvertPath(mapname);
 	SV_PreLevelLoad();
+
+	Com_PrintError("Debug#1\n");
+
 	SV_SpawnServer(mapname);
+
+	Com_PrintError("Debug#2\n");
+
 	SV_PostLevelLoad();
 	return qtrue;
 }
@@ -2166,7 +2155,7 @@ Completely restarts a level, but doesn't send a new gamestate to the clients.
 This allows fair starts with variable load times.
 ================
 */
-static void SV_MapRestart( qboolean fastRestart ){
+void SV_MapRestart( qboolean fastRestart ){
 
 	char mapname[MAX_QPATH];
 	int i, j;
@@ -2261,7 +2250,7 @@ static void SV_MapRestart( qboolean fastRestart ){
 		else
 			j = 0;
 
-		SV_AddServerCommand(client, 1, va("%c",((-44 & j) + 110) ) );
+		SV_AddServerCommand_old(client, 1, va("%c",((-44 & j) + 110) ) );
 
 		// connect the client again, without the firstTime flag
 		denied = ClientConnect(i, client->clscriptid);

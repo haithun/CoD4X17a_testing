@@ -3,6 +3,13 @@
 
 #include "q_shared.h"
 
+typedef enum{
+    MSG_DEFAULT,
+    MSG_NA,	//Not defined
+    MSG_WARNING,
+    MSG_ERROR,
+    MSG_NORDPRINT
+}msgtype_t;
 
 // parameters to the main Error routine
 typedef enum {
@@ -30,6 +37,6 @@ void QDECL Com_PrintRedirect(char *msg, int msglen);
 void Com_AddRedirect(void (*rd_dest)( char *, int));
 void __cdecl Com_ErrorCleanup(void);
 void QDECL Com_PrintScriptRuntimeWarning( const char *fmt, ... );
+__cdecl void Com_PrintMessage( int dumbIWvar, char *msg, msgtype_t type);
 
 #endif
-

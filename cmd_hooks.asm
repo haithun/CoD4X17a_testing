@@ -1,9 +1,5 @@
 SECTION .text
 
-global Cmd_Init
-Cmd_Init:
-    jmp 0x8111730
-
 global Cmd_TokenizeString
 Cmd_TokenizeString:
     jmp 0x811142c
@@ -39,3 +35,12 @@ Cbuf_ExecuteBuffer:
 global Cbuf_AddText
 Cbuf_AddText:
     jmp 0x8110ff8
+
+global Cmd_Wait_f
+Cmd_Wait_f:
+    jmp 0x81111dc
+
+global Cmd_Vstr_f
+Cmd_Vstr_f:
+    jmp 0x8111290
+

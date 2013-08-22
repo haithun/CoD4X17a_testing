@@ -13,6 +13,8 @@
 
 #define BANLIST_DEFAULT_SIZE sizeof(banList_t)*128
 #define MAX_IPBANS 32
+//Don't ban IPs for more than MAX_IPBAN_MINUTES minutes as they can be shared (Carrier-grade NAT)
+#define MAX_IPBAN_MINUTES 30
 
 cvar_t *banlistfile;
 
@@ -24,6 +26,7 @@ typedef struct {	//It is only for timelimited tempbans to prevent happy reconnec
     netadr_t	remote;
     char	banmsg[128];
     int		uid;	//Needed to delete or update bans
+    char	guid[9];
     unsigned int	timeout;
     int		expire;
     int		systime;
@@ -249,7 +252,7 @@ char* SV_PlayerBannedByip(netadr_t *netadr){	//Gets called in SV_DirectConnect
 
 
 //duration is in minutes
-void SV_PlayerAddBanByip(netadr_t remote, char *reason, int uid, int adminuid, int expire){		//Gets called by future implemented ban-commands and if a prior ban got enforced again - This function can also be used to unset bans by setting 0 bantime
+void SV_PlayerAddBanByip(netadr_t *remote, char *reason, int uid, char* guid, int adminuid, int expire){		//Gets called by future implemented ban-commands and if a prior ban got enforced again
 
     ipBanList_t *list;
     int i;
@@ -258,7 +261,7 @@ void SV_PlayerAddBanByip(netadr_t remote, char *reason, int uid, int adminuid, i
     int duration;
 
     for(list = &ipBans[0], i = 0; i < 1024; list++, i++){	//At first check whether we have already an entry for this player
-        if(NET_CompareBaseAdr(&remote, &list->remote)){
+        if(NET_CompareBaseAdr(remote, &list->remote)){
             break;
         }
 	if (list->systime < oldestTime) {
@@ -270,17 +273,34 @@ void SV_PlayerAddBanByip(netadr_t remote, char *reason, int uid, int adminuid, i
     if(i == 1024){
 	 list = &ipBans[oldest];
     }
-    list->remote = remote;
+    list->remote = *remote;
 
     Q_strncpyz(list->banmsg, reason, 128);
+
+    if(guid && strlen(guid) == 32)
+        guid += 24;
+
+    if(guid && strlen(guid) == 8)
+    {
+
+        Q_strncpyz(list->guid, guid, sizeof(list->guid));
+
+    }else{
+
+        if(uid < 1)
+        {
+            Com_PrintError("SV_PlayerAddBanByip: Bad Guid and bad Uid\n");
+            return;
+        }
+    }
 
     list->expire = expire;
     list->uid = uid;
     list->adminuid = adminuid;
 
     duration = expire - Com_GetRealtime();
-    if(duration > 8*60 || expire == -1)
-        duration = 8*60;	//Don't ban IPs for more than 8 minutes as they can be shared (Carrier-grade NAT)
+    if(duration > MAX_IPBAN_MINUTES*60 || expire == -1)
+        duration = MAX_IPBAN_MINUTES*60;	//Don't ban IPs for more than MAX_IPBAN_MINUTES minutes as they can be shared (Carrier-grade NAT)
 
     list->systime = Sys_Milliseconds();
 
@@ -289,7 +309,59 @@ void SV_PlayerAddBanByip(netadr_t remote, char *reason, int uid, int adminuid, i
 }
 
 
-char* SV_PlayerIsBanned(int uid, char* pbguid, netadr_t addr){
+void SV_RemoveBanByip(netadr_t *remote, int uid, char* guid)
+{
+    ipBanList_t *thisipban;
+    int i;
+
+    if(uid > 0)
+    {
+
+        for(thisipban = ipBans, i = 0; i < 1024; thisipban++, i++)
+        {
+            if(uid == thisipban->uid)
+            {
+                Com_Memset(thisipban,0,sizeof(ipBanList_t));
+                return;
+            }
+        }
+    }
+
+    if(guid && strlen(guid) == 32)
+        guid += 24;
+
+    if(guid && strlen(guid) == 8)
+    {
+
+        for(thisipban = ipBans, i = 0; i < 1024; thisipban++, i++)
+        {
+            if(!Q_stricmp(guid, thisipban->guid))
+            {
+                Com_Memset(thisipban,0,sizeof(ipBanList_t));
+                return;
+            }
+        }
+
+    }
+
+    if(remote != NULL)
+    {
+        for(thisipban = ipBans, i = 0; i < 1024; thisipban++, i++)
+        {
+            if(NET_CompareBaseAdr(remote, &thisipban->remote))
+            {
+                Com_Memset(thisipban,0,sizeof(ipBanList_t));
+                return;
+            }
+        }
+
+    }
+
+
+}
+
+
+char* SV_PlayerIsBanned(int uid, char* pbguid, netadr_t *addr){
 
   banList_t *this;
   int i;
@@ -305,7 +377,7 @@ char* SV_PlayerIsBanned(int uid, char* pbguid, netadr_t addr){
         if(this->playeruid == uid){
 
             if(this->expire == (time_t)-1){
-                SV_PlayerAddBanByip(addr, this->reason, this->playeruid , this->adminuid, -1);
+                SV_PlayerAddBanByip(addr, this->reason, this->playeruid, pbguid, this->adminuid, -1);
                 return va("\nEnforcing prior ban\nPermanent ban issued onto this gameserver\nYou will be never allowed to join this gameserver again\n Your UID is: %i    Banning admin UID is: %i\nReason for this ban:\n%s\n",
                 this->playeruid,this->adminuid,this->reason);
             }
@@ -313,7 +385,7 @@ char* SV_PlayerIsBanned(int uid, char* pbguid, netadr_t addr){
             if(this->expire > Com_GetRealtime()){
 
 		int remaining = (int)(this->expire - Com_GetRealtime());
-                SV_PlayerAddBanByip(addr, this->reason, this->playeruid, this->adminuid, this->expire);
+                SV_PlayerAddBanByip(addr, this->reason, this->playeruid, pbguid, this->adminuid, this->expire);
 		int d = remaining/(60*60*24);
 		remaining = remaining%(60*60*24);
 		int h = remaining/(60*60);
@@ -484,7 +556,6 @@ qboolean SV_RemoveBan(int uid, char* guid, char* name){
     char* printguid;
     char* banreason;
     char* printnick;
-    ipBanList_t *thisipban;
 
     if(uid > 0){
         type = 0;
@@ -522,6 +593,7 @@ qboolean SV_RemoveBan(int uid, char* guid, char* name){
                         continue;
         }
         this->expire = (time_t) 0;
+        SV_RemoveBanByip(NULL, this->playeruid, this->pbguid);
         succ = qtrue;
 
         if(!*this->pbguid){
@@ -540,14 +612,6 @@ qboolean SV_RemoveBan(int uid, char* guid, char* name){
             printnick = "N/A";
         }else{
             printnick = this->playername;
-        }
-
-        if(this->playeruid > 0){
-            for(thisipban = &ipBans[0], i = 0; i < 1024; thisipban++, i++){
-                if(uid == thisipban->uid){
-                    Com_Memset(thisipban,0,sizeof(ipBanList_t));
-                }
-            }
         }
 
         Com_Printf("Removing ban for Nick: %s, UID: %i, GUID: %s, Banreason: %s\n", printnick, this->playeruid, printguid, banreason);

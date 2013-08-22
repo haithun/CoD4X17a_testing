@@ -1,3 +1,9 @@
+#ifndef __SCR_VM_FUNCTIONS_H__
+#define __SCR_VM_FUNCTIONS_H__
+
+#include "scr_vm.h"
+#include "g_sv_shared.h"
+
 #ifndef scr_entref_t
 typedef int scr_entref_t;
 #endif
@@ -35,3 +41,7 @@ void PlayerCmd_spawn(scr_entref_t arg);
 void GScr_NewHudElem();
 void GScr_NewClientHudElem();
 void HECmd_SetText(scr_entref_t entnum);
+
+__cdecl void ClientScr_SetSessionTeam(gclient_t* gcl, client_fields_t* gfl);
+
+#endif

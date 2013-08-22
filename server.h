@@ -517,6 +517,8 @@ __optimize3 __regparm2 void SV_ExecuteClientMessage( client_t *cl, msg_t *msg );
 
 void SV_GetUserinfo( int index, char *buffer, int bufferSize );
 
+qboolean SV_Map(const char* levelname);
+void SV_MapRestart( qboolean fastrestart );
 
 void __cdecl SV_SetConfigstring(int index, const char *text);
 //SV_SetConfigstring SV_SetConfigstring = (tSV_SetConfigstring)(0x8173fda);
@@ -539,6 +541,15 @@ qboolean SV_RemoteCmdAddAdmin(int uid, char* guid, int power);
 qboolean SV_RemoteCmdInfoAddAdmin(const char* infostring);
 void SV_RemoteCmdWriteAdminConfig(char* buffer, int size);
 void QDECL SV_PrintAdministrativeLog( const char *fmt, ... );
+int SV_RemoteCmdGetInvokerUid( void );
+const char* SV_RemoteCmdGetInvokerGuid( void );
+int SV_RemoteCmdGetInvokerClnum( void );
+int SV_RemoteCmdGetInvokerPower( void );
+void SV_RemoteCmdSetAdmin(int uid, char* guid, int power);
+void SV_RemoteCmdUnsetAdmin(int uid, char* guid);
+void SV_RemoteCmdSetPermission(char* command, int power);
+void SV_RemoteCmdListAdmins( void );
+
 
 extern cvar_t* sv_padPackets;
 extern cvar_t* sv_demoCompletedCmd;
@@ -555,6 +566,11 @@ extern cvar_t* sv_wwwDownload;
 extern cvar_t* sv_autodemorecord;
 extern cvar_t* sv_modStats;
 extern cvar_t* sv_password;
+extern cvar_t* sv_mapRotation;
+extern cvar_t* sv_mapRotationCurrent;
+extern cvar_t* sv_cheats;
+extern cvar_t* sv_consayname;
+extern cvar_t* sv_contellname;
 
 void __cdecl SV_StringUsage_f(void);
 void __cdecl SV_ScriptUsage_f(void);
@@ -583,17 +599,22 @@ void __cdecl SV_AddServerCommand_old(client_t *client, int unkownzeroorone, cons
 //sv_banlist.c
 void SV_InitBanlist( void );
 qboolean  SV_ReloadBanlist();
-char* SV_PlayerIsBanned(int uid, char* pbguid, netadr_t addr);
+char* SV_PlayerIsBanned(int uid, char* pbguid, netadr_t *addr);
 char* SV_PlayerBannedByip(netadr_t *netadr);	//Gets called in SV_DirectConnect
-void SV_PlayerAddBanByip(netadr_t remote, char *reason, int uid, int adminuid, int expire);		//Gets called by future implemented ban-commands and if a prior ban got enforced again - This function can also be used to unset bans by setting 0 bantime
-
-
+void SV_PlayerAddBanByip(netadr_t *remote, char *reason, int uid, char* guid, int adminuid, int expire);		//Gets called by future implemented ban-commands and if a prior ban got enforced again - This function can also be used to unset bans by setting 0 bantime
+qboolean SV_RemoveBan(int uid, char* guid, char* name);
+void SV_DumpBanlist( void );
 
 extern	serverStaticExt_t	svse;	// persistant server info across maps
 extern	permServerStatic_t	psvs;	// persistant even if server does shutdown
 
+struct moveclip_s;
+struct trace_s;
+
+
 __cdecl void SV_UpdateServerCommandsToClient( client_t *client, msg_t *msg );
 __cdecl void SV_SendMessageToClient( msg_t *msg, client_t *client );
+__cdecl void SV_WriteSnapshotToClient(client_t* client, msg_t* msg);
+__cdecl void SV_ClipMoveToEntity(struct moveclip_s *clip, svEntity_t *entity, struct trace_s *trace);
 
 #endif
-

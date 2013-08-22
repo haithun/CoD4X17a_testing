@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "q_platform.h"
 #include "net_game_conf.h"
 #include "cmd.h"
+#include "net_game.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -111,7 +112,7 @@ void Cmd_AddCommand(char* name, void* fun){}
 #define NET_TimeGetTime Com_GetFrameMsec
 #endif
 
-#ifndef NET_TimeGetTime
+#ifndef __NET_GAME_H__
 unsigned int net_timeBase;
 int NET_TimeGetTime( void )
 {
@@ -124,21 +125,21 @@ int NET_TimeGetTime( void )
 }
 #endif
 
-#ifndef NET_TCPConnectionClosed
+#ifndef __NET_GAME_H__
 #pragma message "Function NET_TCPConnectionClosed is undefined"
 void NET_TCPConnectionClosed(netadr_t* adr, int sock, int connectionId, int serviceId){}
 #endif
-#ifndef NET_UDPPacketEvent
+#ifndef __NET_GAME_H__
 #pragma message "Function NET_UDPPacketEvent is undefined"
 void NET_UDPPacketEvent(netadr_t* from, void* data, int len){}
 #endif
-#ifndef NET_TCPAuthPacketEvent
+#ifndef __NET_GAME_H__
 #pragma message "Function NET_TCPAuthPacketEvent is undefined"
 tcpclientstate_t NET_TCPAuthPacketEvent(netadr_t* remote, byte* bufData, int cursize, int* sock, int* connectionId, int *serviceId){ return TCP_AUTHSUCCESSFULL; }
 #endif
-#ifndef NET_TCPPacketEvent
+#ifndef __NET_GAME_H__
 #pragma message "Function NET_TCPPacketEvent is undefined"
-void NET_TCPPacketEvent(netadr_t* remote, byte* bufData, int cursize, int* sock, int connectionId, int serviceId){}
+qboolean NET_TCPPacketEvent(netadr_t* remote, byte* bufData, int cursize, int* sock, int connectionId, int serviceId){ return qfalse; }
 #endif
 
 
@@ -2204,7 +2205,8 @@ void NET_TcpPacketEventLoop(){
 		fdr = tcpServer.fdr;
 		activefd = select(tcpServer.highestfd + 1, &fdr, NULL, NULL, &timeout);
 
-		if(activefd < 0){
+		if(activefd < 0)
+		{
 			Com_PrintWarningNoRedirect("NET_TcpPacketEventLoop: select() syscall failed: %s\n", NET_ErrorString());
 			break;
 
@@ -2213,7 +2215,8 @@ void NET_TcpPacketEventLoop(){
 			for(i = 0, conn = tcpServer.connections; i < MAX_TCPCONNECTIONS; i++, conn++)
 			{
 
-				if(FD_ISSET(conn->sock, &fdr)){
+				if(FD_ISSET(conn->sock, &fdr))
+				{
 
 					switch(conn->state)
 					{
@@ -2221,7 +2224,8 @@ void NET_TcpPacketEventLoop(){
 					case TCP_AUTHAGAIN:
 
                                                 cursize = 0;
-						while( cursize < 2048 )
+
+                                                while( cursize < 2048 )
                                                 {
                                                     ret = NET_GetTcpPacket(conn, bufData + cursize, sizeof(bufData) - cursize, qfalse);
 
@@ -2231,11 +2235,11 @@ void NET_TcpPacketEventLoop(){
                                                         cursize += ret;
                                                 }
 
-						if(conn->lastMsgTime == 0 || conn->sock < 1){
+						if(conn->lastMsgTime == 0 || conn->sock < 1)
+						{
 							break; //Connection closed unexpected
 						//Close connection, we don't want to process huge messages as auth-packet or want to quit if the login was bad
-						}else if(cursize > 2048 || (conn->state = NET_TCPAuthPacketEvent(&conn->remote, bufData, cursize, &conn->sock, &conn->connectionId, &conn->serviceId)) == TCP_AUTHBAD)
-						{
+						}else if(cursize > 2048 || (conn->state = NET_TCPAuthPacketEvent(&conn->remote, bufData, cursize, conn->sock, &conn->connectionId, &conn->serviceId)) == TCP_AUTHBAD){
 							closesocket(conn->sock);
 							conn->lastMsgTime = 0;
 							FD_CLR(conn->sock, &tcpServer.fdr);
@@ -2273,7 +2277,13 @@ void NET_TcpPacketEventLoop(){
 							Com_PrintWarning( "Oversize packet from %s\n", NET_AdrToString (&conn->remote));
 							cursize = sizeof(bufData);
 						}
-						NET_TCPPacketEvent(&conn->remote, bufData, cursize, &conn->sock, conn->connectionId, conn->serviceId);
+						if(NET_TCPPacketEvent(&conn->remote, bufData, cursize, conn->sock, conn->connectionId, conn->serviceId))
+						{
+							closesocket(conn->sock);
+							conn->lastMsgTime = 0;
+							FD_CLR(conn->sock, &tcpServer.fdr);
+							conn->sock = INVALID_SOCKET;
+						}
 						break;
 					}
 
@@ -2650,28 +2660,28 @@ Sys_SendPacketToSocket
 Only for Stream sockets (TCP)
 ==================
 */
-int Sys_SendPacketToSocket( int length, const void *data, SOCKET *socket ) {
+
+int Sys_SendPacketToSocket( int length, const void *data, SOCKET socket ) {
 
 	int	ret = SOCKET_ERROR;
 
-	if(*socket < 1)
+	if(socket < 1)
 		return qfalse;
 
-	ret = send( *socket, data, length, MSG_NOSIGNAL | MSG_MORE); // FIX: flag NOSIGNAL prevents SIGPIPE in case of connection problems
+	ret = send( socket, data, length, MSG_NOSIGNAL | MSG_MORE); // FIX: flag NOSIGNAL prevents SIGPIPE in case of connection problems
 
 	if( ret == SOCKET_ERROR ) {
 		int err = socketError;
 
 		// wouldblock is silent
-		if( err == EAGAIN ) {
+		if( err == EAGAIN )
+		{
 			return SOCKET_ERROR;
 		}
 
 		Com_PrintWarningNoRedirect( "NET_SendTCPPacket: %s\n", NET_ErrorString() ); // BUGFIX: Moved the print after the socket closing, prevents SIGSEGV when consolestream breaks
 										//Replaced with no redirect printf
 
-		closesocket(*socket);
-		*socket = INVALID_SOCKET;
 		return SOCKET_ERROR;
 
 	}
@@ -2685,7 +2695,7 @@ NET_TCPSendData
 Only for Stream sockets (TCP)
 ==================
 */
-qboolean NET_TCPSendData( int *sock, const void *data, int length ) {
+qboolean NET_TCPSendData( int sock, const void *data, int length ) {
 
 	int state;
 
@@ -2693,9 +2703,10 @@ qboolean NET_TCPSendData( int *sock, const void *data, int length ) {
 	{
 		state = Sys_SendPacketToSocket( length, data, sock );
 
-		if(state == SOCKET_ERROR){
+		if(state == SOCKET_ERROR)
+		{
 			Com_PrintWarningNoRedirect ("Couldn't send data to remote host: %s\n", NET_ErrorString());
-			return qfalse;
+			return qtrue;
 		}
 
 		length -= state;
@@ -2706,7 +2717,7 @@ qboolean NET_TCPSendData( int *sock, const void *data, int length ) {
 
 	}while( length > 0);
 
-	return qtrue;
+	return qfalse;
 }
 
 

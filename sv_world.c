@@ -2,7 +2,7 @@
 #include "trace.h"
 #include "server.h"
 
-typedef struct {
+typedef struct moveclip_s{
 //	vec3_t boxmins, boxmaxs;	// enclose the test object along entire move
 	vec3_t mins;	//0x00
 	vec3_t maxs;	//0x0c size of the moving object

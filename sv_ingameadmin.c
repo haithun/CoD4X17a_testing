@@ -7,7 +7,7 @@
 #include "cmd.h"
 #include "server.h"
 #include "punkbuster.h"
-
+#include "nvconfig.h"
 
 #include <string.h>
 #include <stdarg.h>
@@ -38,10 +38,34 @@ typedef struct{
 }cmdInvoker_t;
 
 
-cmdInvoker_t cmdInvoker;
-adminPower_t *adminpower;
-client_t *redirectClient;
-qboolean cmdSystemInitialized;
+static cmdInvoker_t cmdInvoker;
+static adminPower_t *adminpower;
+static client_t *redirectClient;
+static qboolean cmdSystemInitialized;
+
+int SV_RemoteCmdGetInvokerUid()
+{
+    return cmdInvoker.currentCmdInvoker;
+}
+
+const char* SV_RemoteCmdGetInvokerGuid()
+{
+    return cmdInvoker.currentCmdInvokerGuid;
+}
+
+int SV_RemoteCmdGetInvokerClnum()
+{
+    return cmdInvoker.clientnum;
+}
+
+
+int SV_RemoteCmdGetInvokerPower()
+{
+    return cmdInvoker.currentCmdPower;
+}
+
+
+
 
 
 void SV_RemoteCmdInit(){
@@ -447,4 +471,198 @@ void QDECL SV_PrintAdministrativeLog( const char *fmt, ... ) {
 
 	Com_PrintAdministrativeLog( msg );
 
+}
+
+/*
+============
+Cmd_RemoteSetAdmin_f
+============
+*/
+
+void SV_RemoteCmdSetAdmin(int uid, char* guid, int power)
+{
+
+    adminPower_t *admin;
+    adminPower_t *this;
+
+    if(SV_UseUids()){
+
+        if(uid < 1){
+            Com_Printf("No such player\n");
+            return;
+        }
+
+        NV_ProcessBegin();
+
+        for(admin = adminpower ; admin ; admin = admin->next){
+            if(admin->uid == uid){
+                if(admin->power != power){
+                    admin->power = power;
+
+                    Com_Printf( "Admin power changed for: uid: %i to level: %i\n", uid, power);
+                    SV_PrintAdministrativeLog( "changed power of admin with uid: %i to new power: %i", uid, power);
+                }
+                NV_ProcessEnd();
+                return;
+            }
+        }
+
+        this = Z_Malloc(sizeof(adminPower_t));
+        if(this){
+            this->uid = uid;
+            this->power = power;
+            this->next = adminpower;
+            adminpower = this;
+            Com_Printf( "Admin added: uid: %i level: %i\n", uid, power);
+            SV_PrintAdministrativeLog( "added a new admin with uid: %i and power: %i", uid, power);
+        }
+
+    }else{
+
+        if(guid && strlen(guid) == 32)
+        {
+            guid += 24;
+        }
+        if(!guid || strlen(guid) != 8)
+        {
+                Com_Printf("Error: No such player\n");
+                return;
+        }
+
+        NV_ProcessBegin();
+
+        for(admin = adminpower ; admin ; admin = admin->next)
+        {
+            if(!Q_stricmp(admin->guid, guid)){
+                if(admin->power != power){
+                    admin->power = power;
+
+                    Com_Printf( "Admin power changed for: guid: %s to level: %i\n", guid, power);
+                    SV_PrintAdministrativeLog( "changed power of admin with guid: %s to new power: %i", guid, power);
+                }
+                NV_ProcessEnd();
+                return;
+            }
+        }
+
+        this = Z_Malloc(sizeof(adminPower_t));
+        if(this)
+        {
+            Q_strncpyz(this->guid, guid, sizeof(this->guid));
+            this->power = power;
+            this->next = adminpower;
+            adminpower = this;
+            Com_Printf( "Admin added: guid: %s level: %i\n", guid, power);
+            SV_PrintAdministrativeLog( "added a new admin with guid: %s and power: %i", guid, power);
+        }
+    }
+
+    NV_ProcessEnd();
+}
+
+
+
+
+/*
+============
+Cmd_RemoteUnsetAdmin_f
+============
+*/
+void SV_RemoteCmdUnsetAdmin(int uid, char* guid)
+{
+
+    adminPower_t *admin, **this;
+
+    if(SV_UseUids()){
+
+        if(uid < 1){
+            Com_Printf("No such player\n");
+            return;
+        }
+
+        NV_ProcessBegin();
+
+        for(this = &adminpower, admin = *this; admin ; admin = *this)
+        {
+
+            if(admin->uid == uid){
+                *this = admin->next;
+                Z_Free(admin);
+                NV_ProcessEnd();
+                Com_Printf( "User removed: uid: %i\n", uid);
+                SV_PrintAdministrativeLog( "removed admin with uid: %i", uid);
+                return;
+            }
+            this = &admin->next;
+        }
+
+    }else{
+
+        if(guid && strlen(guid) == 32)
+        {
+            guid += 24;
+        }
+        if(!guid || strlen(guid) != 8)
+        {
+                Com_Printf("Error: No such player\n");
+                return;
+        }
+
+        NV_ProcessBegin();
+        for(this = &adminpower, admin = *this; admin ; admin = *this)
+        {
+
+            if(!Q_stricmp(admin->guid, guid)){
+                *this = admin->next;
+                Z_Free(admin);
+                NV_ProcessEnd();
+                Com_Printf( "User removed: guid: %s\n", guid);
+                SV_PrintAdministrativeLog( "removed admin with guid: %s", guid);
+                return;
+            }
+            this = &admin->next;
+        }
+
+    }
+
+    Com_Printf( "Error: No such user in database\n");
+    NV_ProcessEnd();
+}
+
+/*
+============
+Cmd_RemoteSetPermission
+Changes minimum-PowerLevel of a command
+============
+*/
+void SV_RemoteCmdSetPermission(char* command, int power)
+{
+
+
+    NV_ProcessBegin();
+    if(Cmd_SetPower(command, power))
+    {
+        SV_PrintAdministrativeLog("changed required power of cmd: %s to new power: %i", command, power);
+        Com_Printf("changed required power of cmd: %s to new power: %i\n", command, power);
+    }else{
+        Com_Printf("Failed to change power of cmd: %s Maybe this is not a valid command.\n", command);
+    }
+    NV_ProcessEnd();
+}
+
+/*
+============
+Cmd_RemoteListAdmin_f
+============
+*/
+void SV_RemoteCmdListAdmins()
+{
+
+    adminPower_t *admin;
+    int i;
+
+    for(i = 0, admin = adminpower ; admin ; i++, admin = admin->next){
+                Com_Printf( "Admin : uid: %i to: level: %i\n", admin->uid, admin->power);
+    }
+    Com_Printf( "%i registered Admins\n", i);
 }

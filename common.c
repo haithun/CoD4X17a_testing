@@ -718,8 +718,6 @@ void Com_Init(char* commandLine){
 //    Com_AddLoggingCommands();
 //    HL2Rcon_AddSourceAdminCommands();
 
-    Cmd_AddCommands();
-
     Sys_Init();
 
     Com_UpdateRealtime();

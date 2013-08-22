@@ -77,5 +77,8 @@ void	Cmd_AddCommands(void);
 void	Cmd_WritePowerConfig(char* buffer, int size);
 qboolean Cmd_InfoSetPower( const char *infostring );
 
+void	Cmd_Vstr_f(void);
+void	Cmd_Wait_f(void);
+
 #endif
 

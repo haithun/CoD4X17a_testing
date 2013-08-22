@@ -18,6 +18,7 @@ typedef struct{
 }msgDisplay_t;
 
 static msgDisplay_t messages;
+
 static char motdBuff[200];
 
 void G_DestroyMessage(game_hudelem_t* hudelem){
@@ -431,4 +432,10 @@ void G_ShowMotd(client_t* cl)
     Com_AddTimedEvent(10800, G_RemoveMotd, 2, hudelem1, hudelem2);
     Com_AddTimedEvent(15000, G_SwitchToRules, 1, cl);
 
+}
+
+
+void G_ClearAllMessages()
+{
+    Com_Memset(&messages, 0, sizeof(msgDisplay_t));
 }

@@ -4,7 +4,8 @@
 #include "cmd.h"
 #include "qcommon_io.h"
 #include "qcommon_mem.h"
-
+#include "qcommon.h"
+#include "filesystem.h"
 
 
 cmd_function_t **cmd_functions_addr = (cmd_function_t**)(0x887eb98);
@@ -79,20 +80,6 @@ static void Cmd_Echo_f (void)
 	char buf[MAX_STRING_CHARS];
 
 	Com_Printf ("%s\n", Cmd_Args(buf, sizeof(buf)));
-}
-
-
-
-void Cmd_AddCommands(){
-
-	static qboolean	initialized;
-
-	if ( initialized ) {
-		return;
-	}
-	initialized = qtrue;
-
-	Cmd_AddCommand ("echo", Cmd_Echo_f);
 }
 
 
@@ -372,3 +359,176 @@ void Cmd_WritePowerConfig(char* buffer, int size)
         Q_strcat(buffer, size, "\\\n");
     }
 }
+
+/*
+============
+Cmd_ListPower_f
+============
+*/
+
+static void Cmd_ListPower_f() {
+
+	cmd_function_t  *cmd;
+	int i, hidden, j, l;
+	char            *match;
+
+	if ( Cmd_Argc() > 1 ) {
+		match = Cmd_Argv( 1 );
+	} else {
+		match = NULL;
+	}
+
+	i = 0;
+	hidden = 0;
+	for ( cmd = cmd_functions ; cmd ; cmd = cmd->next ) {
+		if ( (match && !Com_Filter( match, cmd->name, qfalse ))) {
+			continue;
+		}
+		if(cmd->minPower == 100){
+			hidden++;
+			continue;
+		}
+		Com_Printf ("%s", cmd->name );
+
+		l = 24 - strlen(cmd->name);
+		j = 0;
+
+		do
+		{
+			Com_Printf (" ");
+			j++;
+		} while(j < l);
+
+		Com_Printf( "%d\n", cmd->minPower );
+		i++;
+	}
+	Com_Printf( "\n%i commands with specified power settings are shown\n", i );
+	Com_Printf( "%i commands are hidden because the required power level for those commands is set to 100\n", hidden );
+	Com_Printf( "Type cmdlist to get a complete list of all commands\n");
+}
+
+
+
+/*
+============
+Cmd_List_f
+============
+*/
+static void Cmd_List_f( void ) {
+	cmd_function_t  *cmd;
+	int i;
+	char            *match;
+
+	if ( Cmd_Argc() > 1 ) {
+		match = Cmd_Argv( 1 );
+	} else {
+		match = NULL;
+	}
+
+	i = 0;
+	for ( cmd = cmd_functions ; cmd ; cmd = cmd->next ) {
+		if ( (match && !Com_Filter( match, cmd->name, qfalse )) || SV_RemoteCmdGetInvokerPower() < cmd->minPower) {
+			continue;
+		}
+		Com_Printf( "%s\n", cmd->name );
+		i++;
+	}
+	Com_Printf( "%i commands\n", i );
+}
+
+/*
+===============
+Cmd_Exec_f
+===============
+*/
+/*
+void Cmd_Exec_f( void ) {
+	char    *f;
+	int len;
+	int read;
+
+	fileHandle_t file;
+	char filename[MAX_QPATH];
+	char buf[4096];
+
+	if ( Cmd_Argc() != 2 ) {
+		Com_Printf( "exec <filename> : execute a script file\n" );
+		return;
+	}
+
+	Q_strncpyz( filename, Cmd_Argv( 1 ), sizeof( filename ) );
+	COM_DefaultExtension( filename, sizeof( filename ), ".cfg" );
+	FS_FOpenFileRead(filename, &file);
+	//len = FS_ReadFile( filename, (void **)&f );
+	if ( !file ) {
+		Com_Printf( "couldn't exec %s\n",Cmd_Argv( 1 ) );
+		return;
+	}
+
+	Com_Printf( "execing %s\n",Cmd_Argv( 1 ) );
+
+	while(qtrue)
+	{
+		read = FS_ReadLine(buf, sizeof(buf), file);
+		if(read == 0){
+			FS_FCloseFile(file);
+			return;
+		}
+
+
+		if(read == -1){
+			Com_Printf("Can not read from nvconfig.dat\n");
+			FS_FCloseFile(file);
+			return;
+		}
+		if(!*buf || *buf == '\n'){
+			continue;
+		}
+		Cbuf_Execute(buf, 0)
+	}
+}
+*/
+
+
+void Cmd_Exec_f( void ) {
+/*	char    *f;
+	char filename[MAX_QPATH];
+
+	if ( Cmd_Argc() != 2 ) {
+		Com_Printf( "exec <filename> : execute a script file\n" );
+		return;
+	}
+
+	Q_strncpyz( filename, Cmd_Argv( 1 ), sizeof( filename ) );
+	COM_DefaultExtension( filename, sizeof( filename ), ".cfg" );
+	FS_ReadFile( filename, (void **)&f );
+	if ( !f ) {
+		Com_PrintError( "couldn't exec %s\n",Cmd_Argv( 1 ) );
+		return;
+	}
+	Com_Printf( "execing %s\n",Cmd_Argv( 1 ) );
+
+	Cbuf_ExecuteBuffer( 0,0, f );
+
+	FS_FreeFile( f );*/
+}
+
+
+
+void Cmd_Init( void ) {
+	*(int*)0x88799a0 = -1;
+	*(int*)0x887c300 = 0;
+	*(int*)0x887c304 = 0;
+	*(int*)0x8879a40 = -1;
+	*(int*)0x887eb40 = 0;
+	*(int*)0x887eb44 = 0;
+
+	Cmd_AddCommand( "cmdlist",Cmd_List_f );
+	Cmd_AddCommand ("cmdpowerlist", Cmd_ListPower_f);
+	Cmd_AddCommand( "exec",Cmd_Exec_f );
+	Cmd_AddCommand( "vstr",Cmd_Vstr_f );
+	Cmd_AddCommand( "echo",Cmd_Echo_f );
+	Cmd_AddCommand( "wait", Cmd_Wait_f );
+
+}
+

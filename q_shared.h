@@ -243,7 +243,24 @@ void XML_CloseTag(xml_t *base);
 char *Com_SkipCharset( char *s, char *sep );
 char *Com_SkipTokens( char *s, int numTokens, char *sep );
 
+void COM_DefaultExtension( char *path, int maxSize, const char *extension );
+
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

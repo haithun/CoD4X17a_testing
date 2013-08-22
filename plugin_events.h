@@ -51,3 +51,4 @@ char Plugin_Events[PLUGINS_ITEMCOUNT][32]={
 };
 */
 void Plugin_Event(int, ...);
+void Plugin_Init();

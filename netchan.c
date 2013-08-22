@@ -574,7 +574,7 @@ NET_TCPPrint
 Sends a text message in an out-of-band datagram
 ================
 */
-void QDECL NET_PrintData( int *sock, const char *format, ... ) {
+void QDECL NET_PrintData( int sock, const char *format, ... ) {
 	va_list		argptr;
 	char		string[MAX_PACKETLEN];
 
@@ -594,8 +594,8 @@ NET_TCPData
 Sends a data message in an out-of-band datagram (only used for "PbSvSendToClient")
 ================
 */
-void NET_SendData( int *sock, byte *data, int len ) {
+qboolean NET_SendData( int sock, byte *data, int len ) {
 
-	NET_TCPSendData( sock, data, len );
+	return NET_TCPSendData( sock, data, len );
 }
 

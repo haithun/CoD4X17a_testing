@@ -2,7 +2,7 @@
 #define __TRACE_H__
 
 // a trace is returned when a box is swept through the world
-typedef struct {
+typedef struct trace_s{
 	float	fraction;       //0x00 time completed, 1.0 = didn't hit anything
 	int	unknown[6];
 /*	qboolean allsolid;      // if true, plane is not valid

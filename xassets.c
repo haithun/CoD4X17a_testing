@@ -108,7 +108,7 @@ void XAssets_PatchLimits(){
 
 	if(!Sys_MemoryProtectWrite(ptr, size))
 	{
-		_exit(1);
+		Com_Error(ERR_FATAL,"XAssets_PatchLimits: Failed to change memory to writeable\n");
 	}
         DB_XAssetPool[XModel] = Z_Malloc(MAX_XMODELS*DB_GetXAssetTypeSize(XModel));
         DB_XAssetPool[WeaponDef] = Z_Malloc(MAX_WEAPON*DB_GetXAssetTypeSize(WeaponDef));
@@ -124,7 +124,7 @@ void XAssets_PatchLimits(){
 
 	if(!Sys_MemoryProtectReadonly(ptr, size))
 	{
-		_exit(1);
+		Com_Error(ERR_FATAL,"XAssets_PatchLimits: Failed to change memory to read only\n");
 	}
 
 	//Patch XAssets poolsize
@@ -135,7 +135,7 @@ void XAssets_PatchLimits(){
 
 	if(!Sys_MemoryProtectWrite(ptr, size))
 	{
-		_exit(1);
+		Com_Error(ERR_FATAL,"XAssets_PatchLimits: Failed to change memory to writeable\n");
 	}
 
         DB_XAssetPoolSize[XModel] = MAX_XMODELS;
@@ -145,7 +145,7 @@ void XAssets_PatchLimits(){
 
 	if(!Sys_MemoryProtectReadonly(ptr, size))
 	{
-		_exit(1);
+		Com_Error(ERR_FATAL,"XAssets_PatchLimits: Failed to change memory to read only\n");
 	}
 
 }

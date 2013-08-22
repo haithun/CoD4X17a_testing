@@ -595,10 +595,10 @@ __optimize3 __regparm1 void SV_DirectConnect( netadr_t *from ) {
         Plugin_Event(PLUGINS_ONPLAYERCONNECT, clientNum, from, newcl->originguid, userinfo, newcl->authentication, &denied);
 
         if(!psvs.useuids)
-            denied = SV_PlayerIsBanned(0, newcl->pbguid, *from);
+            denied = SV_PlayerIsBanned(0, newcl->pbguid, from);
 
         else if(newcl->uid != 0)
-            denied = SV_PlayerIsBanned(newcl->uid, NULL, *from);
+            denied = SV_PlayerIsBanned(newcl->uid, NULL, from);
 
         if(denied){
                 NET_OutOfBandPrint( NS_SERVER, from, "error\n%s", denied);

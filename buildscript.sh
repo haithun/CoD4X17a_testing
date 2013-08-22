@@ -37,7 +37,7 @@ nasm -f elf server_hooks.asm
 nasm -f elf msg_hooks.asm
 
 echo Linking...
-gcc -m32 -Wl,-ldl,-lm,-Tlinkerscript.ld -o cod4x17a_dedrun *.o 
+gcc -m32 -Wl,-ldl,-lpthread,-lm,-Tlinkerscript.ld -o cod4x17a_dedrun *.o 
 #gcc -m32 -shared -fvisibility=hidden -Wl,-soname,cod4x17a.so -o cod4x17a.so *.o
 
 rm *.o

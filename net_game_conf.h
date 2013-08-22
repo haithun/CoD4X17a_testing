@@ -45,6 +45,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #define MAX_MSGLEN 0x20000
 
+
 // the svc_strings[] array in cl_parse.c should mirror this
 //
 // server to client

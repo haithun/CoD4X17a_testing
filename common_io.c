@@ -38,15 +38,6 @@ static int	rd_buffersize;
 static void	(*rd_flush)( char *buffer, qboolean );
 
 
-typedef enum{
-    MSG_DEFAULT,
-    MSG_NA,	//Not defined
-    MSG_WARNING,
-    MSG_ERROR,
-    MSG_NORDPRINT
-}msgtype_t;
-
-
 void Com_BeginRedirect (char *buffer, int buffersize, void (*flush)( char *, qboolean) )
 {
 	if (!buffer || !buffersize || !flush)

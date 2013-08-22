@@ -1,6 +1,15 @@
 #include "q_shared.h"
+#include "qcommon_io.h"
 #include "sys_main.h"
 #include "sys_cod4defs.h"
+#include "sys_patch.h"
+#include "g_sv_shared.h"
+#include "punkbuster.h"
+#include "sys_net.h"
+#include "scr_vm.h"
+#include "server.h"
+#include "scr_vm_functions.h"
+
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -11,8 +20,6 @@
 
 #define ELF_TYPEOFFSET 16
 #define DLLMOD_FILESIZE 2281820
-
-static qboolean Sys_PatchImage();
 
 static qboolean Sys_LoadImagePrepareFile(const char* path)
 {
@@ -152,49 +159,10 @@ static qboolean Sys_LoadImagePrepareFile(const char* path)
 
 
 
-/*
-=============
-Sys_LoadImage
-
-=============
-*/
-void Sys_LoadImage( ){
-
-    void *dl;
-    char *error;
-    char module[MAX_OSPATH];
-
-    Com_sprintf(module, sizeof(module), "%s/%s", Sys_BinaryPath(), COD4_DLL);
-
-    if(!Sys_LoadImagePrepareFile( module ))
-    {
-        printf("An error has occurred. Exiting...\n");
-        _exit(1);
-    }
-
-    dl = dlopen(module, RTLD_LAZY);
-
-    if(dl == NULL)
-    {
-        error = dlerror();
-        printf("Failed to load required module: %s Error: %s\n", module, error);
-        _exit(1);
-
-    }
-    /* No retrieving of symbols where none are :( */
-
-    if(!Sys_PatchImage())
-    {
-        printf("Failed to patch module: %s\n", module);
-        _exit(1);
-    }
-}
-
-
 
 static void Sys_PatchImageData( void )
 {
-/*
+
 static byte patchblock_01[] = { 0xAE, 0xA, 0x5, 0x8, 
 	0x89, 0x3C, 0x24, 0xE8, 0xCC, 0xCC, 0xCC, 0xCC, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 
 	0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 0x90, 
@@ -273,7 +241,7 @@ static byte patchblock_NET_OOB_CALL3[] = { 0x41, 0xB5, 0x17, 0x8,
 	Sys_PatchImageWithBlock(patchblock_NET_OOB_CALL2, sizeof(patchblock_NET_OOB_CALL2));
 	Sys_PatchImageWithBlock(patchblock_NET_OOB_CALL3, sizeof(patchblock_NET_OOB_CALL3));
 
-	SetCallFSO(0x8ab1, Jump_CalcHeight);
+	SetCall(0x8050ab1, Jump_CalcHeight);
 	SetJump(0x8050786, Jump_IsPlayerAboveMax);
 	SetJump(0x80507c6, Jump_ClampVelocity);
 	SetJump(0x805072a, Jump_GetStepHeight);
@@ -290,7 +258,6 @@ static byte patchblock_NET_OOB_CALL3[] = { 0x41, 0xB5, 0x17, 0x8,
 	SetJump(0x810e6ea, PbSvGameQuery);
 	SetJump(0x810e5dc, PbSvSendToClient);
 	SetJump(0x810e5b0, PbSvSendToAddrPort);
-	SetJump(0x8111120, Cmd_List_f);
 	SetJump(0x817e988, SV_ClipMoveToEntity);
 	SetJump(0x81d5a14, Sys_Error);
 	SetJump(0x8122724, Com_PrintMessage);
@@ -318,7 +285,7 @@ static byte patchblock_NET_OOB_CALL3[] = { 0x41, 0xB5, 0x17, 0x8,
 	*(char*)0x8215ccc = '\n'; //adds a missing linebreak
 	*(char*)0x8222ebc = '\n'; //adds a missing linebreak
 	*(char*)0x8222ebd = '\0'; //adds a missing linebreak
-*/
+
 }
 
 
@@ -344,3 +311,40 @@ static qboolean Sys_PatchImage()
 }
 
 
+/*
+=============
+Sys_LoadImage
+
+=============
+*/
+void Sys_LoadImage( ){
+
+    void *dl;
+    char *error;
+    char module[MAX_OSPATH];
+
+    Com_sprintf(module, sizeof(module), "%s/%s", Sys_BinaryPath(), COD4_DLL);
+
+    if(!Sys_LoadImagePrepareFile( module ))
+    {
+        printf("An error has occurred. Exiting...\n");
+        _exit(1);
+    }
+
+    dl = dlopen(module, RTLD_LAZY);
+
+    if(dl == NULL)
+    {
+        error = dlerror();
+        printf("Failed to load required module: %s Error: %s\n", module, error);
+        _exit(1);
+
+    }
+    /* No retrieving of symbols where none are :( */
+
+    if(!Sys_PatchImage())
+    {
+        printf("Failed to patch module: %s\n", module);
+        _exit(1);
+    }
+}
