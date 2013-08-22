@@ -556,12 +556,25 @@ on files returned by FS_FOpenFile...
 ==============
 */
 qboolean FS_FCloseFile( fileHandle_t f ) {
-	// we didn't find it as a pak, so close it as a unique file
+
+	if(fsh[f].zipFile)
+	{
+		unzCloseCurrentFile(fsh[f].handleFiles.file.z);
+		if(fsh[f].handleFiles.unique)
+		{
+			unzClose(fsh[f].handleFiles.file.z);
+		}
+		Com_Memset( &fsh[f], 0, sizeof( fsh[f] ) );
+		return qtrue;
+	}
+
 	if (fsh[f].handleFiles.file.o) {
+	// we didn't find it as a pak, so close it as a unique file
 	    fclose (fsh[f].handleFiles.file.o);
 	    Com_Memset( &fsh[f], 0, sizeof( fsh[f] ) );
 	    return qtrue;
 	}
+
 	Com_Memset( &fsh[f], 0, sizeof( fsh[f] ) );
 	return qfalse;
 }
@@ -1054,7 +1067,8 @@ int FS_Read( void *buffer, int len, fileHandle_t f ) {
 		while (remaining) {
 			block = remaining;
 			read = fread (buf, 1, block, fsh[f].handleFiles.file.o);
-			if (read == 0) {
+			if (read == 0)
+			{
 				// we might have been trying to read from a CD, which
 				// sometimes returns a 0 read on windows
 				if (!tries) {

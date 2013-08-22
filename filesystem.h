@@ -157,6 +157,8 @@ unzFile unzOpen(const char* path);
 int unzOpenCurrentFile(unzFile file);
 int unzSetOffset(unzFile file, unsigned long pos);
 int unzReadCurrentFile(unzFile file, void *buf, unsigned len);
+int unzClose( unzFile file );
+int unzCloseCurrentFile( unzFile file );
 
 char *FS_BuildOSPath( const char *base, const char *game, const char *qpath );
 qboolean FS_HomeRemove( const char *path );

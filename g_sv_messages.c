@@ -3,6 +3,7 @@
 #include "g_hud.h"
 #include "server.h"
 #include "qcommon_io.h"
+#include "g_sv_shared.h"
 
 #include <string.h>
 
@@ -357,16 +358,18 @@ void G_RemoveMotd(game_hudelem_t* hudelem1, game_hudelem_t* hudelem2){
 #define MAX_LENGTH_14 66
 
 
-void G_ShowMotd(client_t* cl)
+void G_ShowMotd(unsigned int clnum)
 {
     game_hudelem_t* hudelem1;
     game_hudelem_t* hudelem2;
 
+    if(clnum > 63)
+        return;
+
+    client_t *cl = &svs.clients[clnum];
+
     int len = strlen(motdBuff);
     float fontscale;
-
-    unsigned int clnum = cl - svs.clients;
-
 
     if(len < 3){
         cl->msgType++;

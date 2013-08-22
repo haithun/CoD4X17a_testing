@@ -44,3 +44,7 @@ global Cmd_Vstr_f
 Cmd_Vstr_f:
     jmp 0x8111290
 
+global Cmd_Exec_f
+Cmd_Exec_f:
+    jmp 0x81121a2
+

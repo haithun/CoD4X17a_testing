@@ -79,6 +79,6 @@ qboolean Cmd_InfoSetPower( const char *infostring );
 
 void	Cmd_Vstr_f(void);
 void	Cmd_Wait_f(void);
-
+void	Cmd_Exec_f(void);
 #endif
 

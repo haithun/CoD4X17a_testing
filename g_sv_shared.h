@@ -35,7 +35,7 @@ extern cvar_t* g_speed;
 
 void __cdecl SV_GameSendServerCommand(int clientnum, int svscmd_type, const char *text);
 //tSV_GameSendServerCommand SV_GameSendServerCommand = (tSV_GameSendServerCommand)(0x817ce42);
-void G_ShowMotd(int clnum);
+void G_ShowMotd(unsigned int clnum);
 void QDECL G_LogPrintf( const char *fmt, ... );
 void G_PrintRedirect(char* msg, int len);
 void G_PrintAddRedirect(void (*rd_dest)( char *, int));

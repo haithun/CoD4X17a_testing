@@ -32,6 +32,14 @@ global unzReadCurrentFile
 unzReadCurrentFile:
     jmp 0x81d37db
 
+global unzClose
+unzClose:
+    jmp 0x81d44aa
+
+global unzCloseCurrentFile
+unzCloseCurrentFile:
+    jmp 0x81d3776
+
 global FS_InitFilesystem
 FS_InitFilesystem:
     jmp 0x818e980

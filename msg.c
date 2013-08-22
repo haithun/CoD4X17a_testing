@@ -48,7 +48,7 @@ This part makes msg.c undepended in case no proper qcommon_io.h is included
 */
 
 
-static qboolean			msgInit = qfalse;
+
 int pcount[256];
 static char bigstring[MAX_MSGLEN];
 
@@ -65,8 +65,12 @@ int oldsize = 0;
 
 
 void MSG_Init( msg_t *buf, byte *data, int length ) {
+
+	static qboolean msgInit = qfalse;
+
 	if (!msgInit) {
 		MSG_initHuffman();
+		msgInit = qtrue;
 	}
 	Com_Memset (buf, 0, sizeof(*buf));
 	buf->data = data;

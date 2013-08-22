@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "sys_net.h"
 #include "server.h"
 #include "net_game.h"
+#include "net_game_conf.h"
 
 void NET_UDPPacketEvent(netadr_t* from, void* data, int len)
 {

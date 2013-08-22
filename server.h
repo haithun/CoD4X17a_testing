@@ -93,7 +93,7 @@ typedef enum {
     UN_NEEDUID,
     UN_OK
 }username_t;
-
+#pragma pack(1)
 
 typedef struct client_s {//90b4f8c
 	clientState_t		state;
@@ -139,7 +139,7 @@ typedef struct client_s {//90b4f8c
 	char			loginname[32];
 	//Free Space
 	qboolean		enteredWorldForFirstTime;
-	byte			free[642];
+	byte			free[658];
 	char			name[64];
 
 	int			unknownUsercmd1;	//0x63c

@@ -2198,7 +2198,7 @@ void NET_TcpPacketEventLoop(){
 	fd_set fdr;
 	tcpConnections_t	*conn;
 
-	byte bufData[MAX_MSGLEN + 1];
+	byte bufData[MAX_MSGLEN];
 
 	while(qtrue){
 
@@ -2383,7 +2383,7 @@ Called from NET_Sleep which uses select() to determine which sockets have seen a
 
 __optimize3 __regparm1 qboolean NET_Event(int socket)
 {
-	byte bufData[MAX_MSGLEN + 1];
+	byte bufData[MAX_MSGLEN];
 	netadr_t from;
 	int i, len;
 

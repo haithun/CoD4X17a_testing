@@ -1058,10 +1058,11 @@ __optimize3 __regparm2 void SV_PacketEvent( netadr_t *from, msg_t *msg ) {
 					//Because the compression algorith is very poor this is already sufficent
 					Com_Printf("Oversize message received from: %s\n", cl->name);
 					SV_DropClient(cl, "Oversize client message");
-				}
+				}else{
 
-//				SV_DumpCommands(cl, msg->data, msg->cursize, qtrue);
-				SV_ExecuteClientMessage( cl, msg );
+	//				SV_DumpCommands(cl, msg->data, msg->cursize, qtrue);
+					SV_ExecuteClientMessage( cl, msg );
+				}
 			}
 		}
 		return;
@@ -2129,11 +2130,7 @@ qboolean SV_Map( const char *levelname ) {
 	FS_ConvertPath(mapname);
 	SV_PreLevelLoad();
 
-	Com_PrintError("Debug#1\n");
-
 	SV_SpawnServer(mapname);
-
-	Com_PrintError("Debug#2\n");
 
 	SV_PostLevelLoad();
 	return qtrue;

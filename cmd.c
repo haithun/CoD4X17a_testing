@@ -487,11 +487,11 @@ void Cmd_Exec_f( void ) {
 		Cbuf_Execute(buf, 0)
 	}
 }
-*/
+
 
 
 void Cmd_Exec_f( void ) {
-/*	char    *f;
+	char    *f;
 	char filename[MAX_QPATH];
 
 	if ( Cmd_Argc() != 2 ) {
@@ -510,9 +510,9 @@ void Cmd_Exec_f( void ) {
 
 	Cbuf_ExecuteBuffer( 0,0, f );
 
-	FS_FreeFile( f );*/
+	FS_FreeFile( f );
 }
-
+*/
 
 
 void Cmd_Init( void ) {
