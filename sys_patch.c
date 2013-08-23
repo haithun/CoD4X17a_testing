@@ -2,13 +2,13 @@
 
 #include "sys_patch.h"
 #include <string.h>
-
 /*
+
 #include <stdlib.h>
 void Sys_RetriveData(){
 
-    #define startADR 0x817b541
-    #define endADR 0x817b56b
+    #define startADR 0x817539b
+    #define endADR 0x81753c4
 
     FILE * fdout;
     byte* adr;
@@ -44,8 +44,8 @@ void Sys_RetriveData(){
 
     exit(0);
 }
-*/
 
+*/
 
 void Sys_PatchImageWithBlock(byte *block, int blocksize)
 {
