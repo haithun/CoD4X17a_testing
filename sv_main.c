@@ -34,7 +34,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "cmd.h"
 #include "msg.h"
 #include "server.h"
-#include "plugin_events.h"
+#include "plugin_handler.h"
 #include "net_game_conf.h"
 #include "misc.h"
 #include "g_sv_shared.h"
@@ -2049,7 +2049,7 @@ void SV_PreLevelLoad(){
 
 	Cvar_SetString(g_mapstarttime, timestr);
 
-	Plugin_Event(PLUGINS_ONEXITLEVEL, NULL);
+	PHandler_Event(PLUGINS_ONEXITLEVEL, NULL);
 	SV_RemoveAllBots();
 	SV_ReloadBanlist();
 
@@ -2087,7 +2087,7 @@ void SV_PreLevelLoad(){
 }
 
 void SV_PostLevelLoad(){
-	Plugin_Event(PLUGINS_ONSPAWNSERVER, NULL);
+	PHandler_Event(PLUGINS_ONSPAWNSERVER, NULL);
 	sv.frameusec = 1000000 / sv_fps->integer;
 	sv.serverId = com_frameTime;
 }
@@ -2138,10 +2138,10 @@ qboolean SV_Map( const char *levelname ) {
 
 
 void SV_PreFastRestart(){
-	Plugin_Event(PLUGINS_ONPREFASTRESTART, NULL);
+	PHandler_Event(PLUGINS_ONPREFASTRESTART, NULL);
 }
 void SV_PostFastRestart(){
-	Plugin_Event(PLUGINS_ONPOSTFASTRESTART, NULL);
+	PHandler_Event(PLUGINS_ONPOSTFASTRESTART, NULL);
 }
 
 /*
@@ -2583,7 +2583,7 @@ __optimize3 __regparm1 qboolean SV_Frame( unsigned int usec ) {
 
 		serverStatus_Write();
 
-	        Plugin_Event(PLUGINS_ONTENSECONDS, NULL);	// Plugin event
+	        PHandler_Event(PLUGINS_ONTENSECONDS, NULL);	// Plugin event
 /*		if(svs.time > svse.nextsecret){
 			svse.nextsecret = svs.time+80000;
 			Com_RandomBytes((byte*)&svse.secret,sizeof(int));

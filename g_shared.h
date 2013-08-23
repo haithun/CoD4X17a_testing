@@ -25,6 +25,8 @@ If you have questions concerning this license or the applicable additional terms
 
 ===========================================================================
 */
+#ifndef G_SHARED_H
+#define G_SHARED_H
 
 #include "filesystem.h"
 #include "entity.h"
@@ -460,3 +462,5 @@ void G_SetSavePersist(int val);
 #define g_TeamName_Allies getcvaradr(0x84bd090)
 #define g_TeamName_Axis getcvaradr(0x84bd094)
 #define g_maxclients getcvaradr(0x84bcfe8)
+
+#endif /*G_SHARED_H*/

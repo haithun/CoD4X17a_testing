@@ -36,7 +36,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "net_game_conf.h"
 #include "misc.h"
 #include "g_sv_shared.h"
-#include "plugin_events.h"
+#include "plugin_handler.h"
 #include "q_platform.h"
 #include "sys_main.h"
 #include "punkbuster.h"
@@ -105,7 +105,7 @@ __optimize3 __regparm1 void SV_GetChallenge(netadr_t *from)
 		if(NET_CompareAdr(from, &challenge->adr))
 		{
 			if(challenge->connected){
-				Com_Memset(challenge, 0 ,sizeof(challenge));
+				Com_Memset(challenge, 0 ,sizeof(challenge_t));
 				continue;
 			}
 
@@ -592,7 +592,7 @@ __optimize3 __regparm1 void SV_DirectConnect( netadr_t *from ) {
 	// save the userinfo
 	Q_strncpyz(newcl->userinfo, userinfo, 1024 );
 
-        Plugin_Event(PLUGINS_ONPLAYERCONNECT, clientNum, from, newcl->originguid, userinfo, newcl->authentication, &denied);
+        PHandler_Event(PLUGINS_ONPLAYERCONNECT, clientNum, from, newcl->originguid, userinfo, newcl->authentication, &denied);
 
         if(!psvs.useuids)
             denied = SV_PlayerIsBanned(0, newcl->pbguid, from);
@@ -928,7 +928,7 @@ __cdecl void SV_DropClient( client_t *drop, const char *reason ) {
 		drop->state = CS_ZOMBIE;        // become free in a few seconds
 
 		HL2Rcon_EventClientLeave(clientnum);
-		Plugin_Event(PLUGINS_ONPLAYERDC,(void*)drop);	// Plugin event
+		PHandler_Event(PLUGINS_ONPLAYERDC,(void*)drop);	// Plugin event
 		return;
 	}
 
@@ -975,7 +975,7 @@ __cdecl void SV_DropClient( client_t *drop, const char *reason ) {
 
 	HL2Rcon_EventClientLeave(clientnum);
 
-	Plugin_Event(PLUGINS_ONPLAYERDC,(void*)drop);	// Plugin event
+	PHandler_Event(PLUGINS_ONPLAYERDC,(void*)drop);	// Plugin event
 
 
 	// if this was the last client on the server, send a heartbeat
@@ -1212,7 +1212,7 @@ void SV_ClientEnterWorld( client_t *client, usercmd_t *cmd ) {
 	client->pureAuthentic = 1;
 
 	HL2Rcon_EventClientEnterWorld( clientNum );
-	Plugin_Event(PLUGINS_ONCLIENTENTERWORLD, client);
+	PHandler_Event(PLUGINS_ONCLIENTENTERWORLD, client);
 
 }
 

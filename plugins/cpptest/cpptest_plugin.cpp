@@ -24,12 +24,8 @@
         is loaded.
 ===========================
 */
-PCL int OnInit(mainFunctions_t mainFunctions){
-	//	Load function pointers, the following 2 lines of code should not be changed.
-	if(GetFunctions(mainFunctions)==-1)
-		return -1;	// -1 => Initialization failed, unload the plugin.
-	//	Function pointers loaded, add your plugin's initialization content here.
-	std::string *s = new std::string();
+PCL int OnInit(){ // Function executed after the plugin is loaded on the server.
+
 	return 0;	// 0 => Initialization successfull.
 }
 /*
@@ -60,10 +56,12 @@ PCL void OnInfoRequest(pluginInfo_t *info){	// Function used to obtain informati
     // Memory pointed by info is allocated by the server binary, just fill in the fields
     
     // =====  MANDATORY FIELDS  =====
-    info->handlerVersion = PLUGIN_HANDLER_VERSION;	// Requested handler version, we request the version compatible with this plugin lib
+    info->handlerVersion.major = PLUGIN_HANDLER_VERSION_MAJOR;
+    info->handlerVersion.minor = PLUGIN_HANDLER_VERSION_MINOR;	// Requested handler version, we request the version compatible with this plugin lib
     
     // =====  OPTIONAL  FIELDS  =====
-    info->pluginVersion = 1.0;	// Plugin version
+    info->pluginVersion.major = 1;
+    info->pluginVersion.minor = 0;	// Plugin version
     strncpy(info->fullName,"An example C++ plugin.",sizeof(info->fullName)); //Full plugin name
     strncpy(info->shortDescription,"This is the plugin's short description.",sizeof(info->shortDescription)); // Short plugin description
     strncpy(info->longDescription,"This is the plugin's long description.",sizeof(info->longDescription));

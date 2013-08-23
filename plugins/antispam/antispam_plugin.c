@@ -1,6 +1,5 @@
 #include <time.h>
 #include "../pinc.h"
-//#include "../functions.c"
 
 #define ANTISPAM_MAXMESSAGES 30
 
@@ -28,11 +27,8 @@ void Antispam_Initialize()
     data.players = (userData_t *)Plugin_Malloc(sizeof(userData_t)*data.maxPlayers);
     memset(data.players,0x00,sizeof(userData_t)*data.maxPlayers);
 }
-int OnInit(mainFunctions_t mainFunctions){	// Funciton called on server initiation
-	//	Load function pointers
-	if(GetFunctions(mainFunctions)==-1)
-		return -1;
-	//	Function pointers loaded, add your plugin's content here
+int OnInit(){	// Funciton called on server initiation
+
 	//G_SayCensor_Init();
 	data.maxPlayers = Plugin_GetSlotCount();
 	data.maxMPM = Cvar_RegisterFloat("antispam_maxMessagesPerMinute",8,0,30,0,"Count of maximum messages a player can send in a minute. 0 disables the chat completely.");
@@ -94,10 +90,12 @@ void OnInfoRequest(pluginInfo_t *info){	// Function used to obtain information a
     // Memory pointed by info is allocated by the server binary, just fill in the fields
     
     // =====  MANDATORY FIELDS  =====
-    info->handlerVersion = PLUGIN_HANDLER_VERSION;	// Requested handler version
+    info->handlerVersion.major = PLUGIN_HANDLER_VERSION_MAJOR;
+    info->handlerVersion.minor = PLUGIN_HANDLER_VERSION_MINOR;	// Requested handler version
     
     // =====  OPTIONAL  FIELDS  =====
-    info->pluginVersion = 1.1;	// Plugin version
+    info->pluginVersion.major = 1;
+    info->pluginVersion.minor = 0;	// Plugin version
     strncpy(info->fullName,"IceOps antispam plugin by TheKelm",sizeof(info->fullName)); //Full plugin name
     strncpy(info->shortDescription,"This plugin is used to prevent spam in the ingame chat.",sizeof(info->shortDescription)); // Short plugin description
     strncpy(info->longDescription,"This plugin is used to prevent spam in the ingame chat. To personalize the settings, set corresponding cvars. Copyright (c) 2013 IceOps. Visit us at www.iceops.in",sizeof(info->longDescription));

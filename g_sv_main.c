@@ -31,7 +31,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "cvar.h"
 #include "entity.h"
 #include "player.h"
-#include "plugin_events.h"
+#include "plugin_handler.h"
 #include "g_shared.h"
 #include "g_sv_shared.h"
 #include "cmd.h"
@@ -60,7 +60,7 @@ __cdecl void ExitLevel( void ) {
 	gclient_t *gcl;
 	client_t *cl;
 
-        Plugin_Event(PLUGINS_ONEXITLEVEL,NULL);
+        PHandler_Event(PLUGINS_ONEXITLEVEL,NULL);
 
 	if(*g_votedMapName->string){
 		if(*g_votedGametype->string)

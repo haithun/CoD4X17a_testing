@@ -77,6 +77,7 @@ typedef struct {
 	};
 }netadr_t;
 
+typedef int SOCKET; // Moved from sys_net.c
 
 void		NET_Init( void );
 void		NET_Shutdown( void );
@@ -115,7 +116,9 @@ qboolean	Sys_StringToAdr( const char *s, netadr_t *a, netadrtype_t family );
 qboolean	Sys_IsLANAddress (netadr_t *adr);
 void		Sys_ShowIP(void);
 qboolean	NET_TCPSendData( int sock, const void *data, int length );
-
+int NET_TcpConnect( const char *remoteAdr );
+int NET_TcpGetData(SOCKET *sock, void* buf, const int buflen);
+void NET_TcpCloseConnection( SOCKET *sock );
 
 
 typedef enum {

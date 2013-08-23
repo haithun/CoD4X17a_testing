@@ -27,28 +27,7 @@ enum PluginEvents{
     PLUGINS_ITEMCOUNT
 
 };
-/*
-char Plugin_Events[PLUGINS_ITEMCOUNT][32]={
 
-    "OnInfoRequest",
-    
-    "OnPlayerDC",
-    "OnPlayerConnect",
-    "OnExitLevel",
-    "OnMessageSent",
-    "OnFrame",
-    "OnOneSecond",
-    "OnTenSeconds",
-    "OnClientAuthorized",
-    "OnClientSpawn",
-    "OnClientEnterWorld",
-    "OnTcpServerPacket",
-    "OnUdpNetEvent",
-    "OnUdpNetSend",
-    "OnSpawnServer",
-    "OnPreFastRestart",
-    "OnPostFastRestart"
-};
-*/
-void Plugin_Event(int, ...);
-void Plugin_Init();
+extern char PHandler_Events[PLUGINS_ITEMCOUNT][32]; // defined in plugin_handler.c
+
+

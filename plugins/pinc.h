@@ -71,9 +71,9 @@
 #endif
 
 #if LANG == CPP
-#define PCL extern "C"
+#define PCL extern "C" __attribute__ ((visibility ("default"))) __attribute__ ((cdecl))
 #else
-#define PCL
+#define PCL __attribute__ ((visibility ("default"))) __attribute__ ((cdecl))
 #endif
 
 //#define malloc Plugin_Malloc
@@ -91,8 +91,6 @@ extern "C"{
 #if LANG == CPP
 }
 #endif
-
-//#include "functions.c"
 
 #else
 

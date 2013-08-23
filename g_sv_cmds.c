@@ -32,7 +32,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "player.h"
 #include "g_sv_shared.h"
 #include "g_shared.h"
-#include "plugin_events.h"
+#include "plugin_handler.h"
 #include "cmd.h"
 #include "qcommon_io.h"
 #include "server.h"
@@ -477,7 +477,7 @@ __cdecl void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *cha
 	}
 
 	qboolean show = qtrue;
-	Plugin_Event(PLUGINS_ONMESSAGESENT, text, ent->s.number, &show);
+	PHandler_Event(PLUGINS_ONMESSAGESENT, text, ent->s.number, &show);
 
 	if(!show)
 		return;

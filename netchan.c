@@ -33,7 +33,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "msg.h"
 #include "netchan.h"
 #include "q_platform.h"
-#include "plugin_events.h"
+#include "plugin_handler.h"
 #include "net_game_conf.h"
 
 #include <string.h>
@@ -482,7 +482,7 @@ qboolean NET_SendPacket( netsrc_t sock, int length, const void *data, netadr_t *
 
 	qboolean returnNow = qfalse;
 
-	Plugin_Event(PLUGINS_ONUDPNETSEND, to, data, length, &returnNow);
+	PHandler_Event(PLUGINS_ONUDPNETSEND, to, data, length, &returnNow);
 
 	if(returnNow){
 		return qtrue;

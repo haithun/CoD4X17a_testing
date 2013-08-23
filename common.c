@@ -13,7 +13,7 @@
 #include "cmd.h"
 #include "sys_net.h"
 #include "xassets.h"
-#include "plugin_events.h"
+#include "plugin_handler.h"
 #include "misc.h"
 #include "scr_vm.h"
 #include "netchan.h"
@@ -735,7 +735,7 @@ void Com_Init(char* commandLine){
 
     DObjInit();
 
-    Plugin_Init();
+    PHandler_Init();
 
     NET_Init();
 
@@ -924,7 +924,7 @@ __optimize3 void Com_Frame( void ) {
 	if(!SV_Frame( usec ))
 		return;
 
-	Plugin_Event(PLUGINS_ONFRAME);
+	PHandler_Event(PLUGINS_ONFRAME);
 
 	Com_TimedEventLoop();
 	Com_EventLoop();
