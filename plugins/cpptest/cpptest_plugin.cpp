@@ -24,8 +24,10 @@
         is loaded.
 ===========================
 */
+
 PCL int OnInit(){ // Function executed after the plugin is loaded on the server.
 
+    Com_Printf("Hello, world! :D\n");
 	return 0;	// 0 => Initialization successfull.
 }
 /*

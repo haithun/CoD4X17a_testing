@@ -46,6 +46,7 @@ void PHandler_Load(char* name, size_t size)
     char dll[256],*strings;
     char* realpath;
     void *lib_handle;
+    char *error;
     elf_data_t text;
     pluginInfo_t info;
 
@@ -108,9 +109,11 @@ void PHandler_Load(char* name, size_t size)
     free(strings);
     Com_DPrintf("Done parsing plugin function names.\n");
     dlerror(); // Clear errors (if any) before loading the .so
-    lib_handle = dlopen(realpath, RTLD_NOW | RTLD_LOCAL | RTLD_DEEPBIND);
-    if (!lib_handle){
-        Com_PrintError("Failed to load the plugin! Error string: '%s'.\n",dll,dlerror());
+    Com_DPrintf("Loading the plugin .so...\n");
+    lib_handle = dlopen(realpath, RTLD_NOW);
+    error = dlerror();
+    if (!lib_handle || error != NULL){
+        Com_PrintError("Failed to load the plugin! Error string: '%s'.\n",dll,error);
         return;
     }
     Com_DPrintf("Plugin OK! Loading...\n");

@@ -1,5 +1,9 @@
-#define QDECL
-#define PLUGIN_COMPILE
+#ifndef PLUGIN_INCLUDES
+
+#error Please include pinc.h instead!
+
+#endif /*PLUGIN_INCLUDES*/
+
 #include <string.h>
 
 
