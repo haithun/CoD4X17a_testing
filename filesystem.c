@@ -274,16 +274,6 @@ void	FS_ForceFlush( fileHandle_t f ) {
 }
 
 
-struct flock* file_lock(short type,short whence){
-    static struct flock filelock;
-    filelock.l_type = type;
-    filelock.l_start = 0;
-    filelock.l_whence = whence;
-    filelock.l_len = 0;
-    filelock.l_pid = getpid();
-    return &filelock;
-}
-
 
 /*
 ==================
