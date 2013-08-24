@@ -315,9 +315,11 @@ void Scr_AddStockMethods(void);
 
 qboolean Scr_AddFunction( const char *cmd_name, xfunction_t function, qboolean developer);
 qboolean Scr_RemoveFunction( const char *cmd_name );
+void Scr_ClearFunctions( void );
 __cdecl void* Scr_GetFunction( const char** v_functionName, qboolean* v_developer );
 qboolean Scr_AddMethod( const char *cmd_name, xfunction_t function, qboolean developer);
 qboolean Scr_RemoveMethod( const char *cmd_name );
+void Scr_ClearMethods( void );
 __cdecl void* Scr_GetMethod( const char** v_functionName, qboolean* v_developer );
 
 

@@ -64,6 +64,31 @@ qboolean Scr_RemoveFunction( const char *cmd_name ) {
 	return qfalse;
 }
 
+/*
+============
+Scr_ClearFunctions
+============
+*/
+
+void Scr_ClearFunctions( )
+{
+	scr_function_t  *cmd, **back;
+
+	int i = 0;
+
+	while ( 1 )
+	{
+		back = &scr_functions;
+		cmd = *back;
+		if ( !cmd ) {
+			// This was the last script function
+			return;
+		}
+		*back = cmd->next;
+		Z_Free( cmd );
+		i++;
+	}
+}
 
 /*
 ============
@@ -140,6 +165,31 @@ qboolean Scr_RemoveMethod( const char *cmd_name ) {
 		back = &cmd->next;
 	}
 	return qfalse;
+}
+
+/*
+============
+Scr_ClearMethods
+============
+*/
+void Scr_ClearMethods(  )
+{
+	scr_function_t  *cmd, **back;
+
+	int i = 0;
+
+	while ( 1 )
+	{
+		back = &scr_methods;
+		cmd = *back;
+		if ( !cmd ) {
+			// This was the last script method
+			return;
+		}
+		*back = cmd->next;
+		Z_Free( cmd );
+		i++;
+	}
 }
 
 /*

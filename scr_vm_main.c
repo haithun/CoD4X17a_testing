@@ -494,6 +494,10 @@ void Scr_AddStockMethods(){
 
 void Scr_InitFunctions()
 {
+    //Reset everything 1st
+    Scr_ClearFunctions();
+    Scr_ClearMethods();
+    //Then add everything again
     Scr_AddStockFunctions();
     Scr_AddStockMethods();
 }
