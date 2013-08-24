@@ -1,7 +1,16 @@
 #ifndef PLUGIN_HANDLER_H
 #define PLUGIN_HANDLER_H
 
-#define MAX_PLUGINS 25
+/*==========================================*
+ *                                          *
+ *         Plugin Handler's header          *
+ *                                          *
+ *   Contains all necessary prototypes      *
+ *  and types for using the Plugin Handler. *
+ *                                          *
+ *==========================================*/
+
+#define MAX_PLUGINS 25 // Maximum number of loaded plugins, hardcoded for better performance
 
 typedef void convariable_t; //For plugins
 
@@ -61,8 +70,8 @@ typedef struct{
 }pluginTcpClientSocket_t;
 
 typedef struct{
-    int (*OnInit)();    // Initialization function
-    void (*OnInfoRequest)();
+    int (*OnInit)();            // Initialization function
+    void (*OnInfoRequest)();    // Info gathering function
 
     void (*OnEvent[PLUGINS_ITEMCOUNT])();
     void (*OnUnload)();    // De-initialization function
@@ -121,6 +130,7 @@ qboolean PHandler_TcpSendData(int,int, void*, int);
 void PHandler_TcpCloseConnection(int,int);
 int PHandler_CallerID();
 void PHandler_ChatPrintf(int,char *,...);
+void PHandler_CmdExecute_f( void ); // fake server command for use in plugin commands
 
 // --------------------------------------//
 //  Plugin Handler's own server commands //
@@ -130,36 +140,5 @@ void PHandler_LoadPlugin_f( void );
 void PHandler_UnLoadPlugin_f( void );
 void PHandler_PluginList_f( void );
 void PHandler_PluginInfo_f( void );
-
-// -----------------------------------------------------//
-//  Plugin Handler's PAPI functions, for reference only //
-// -----------------------------------------------------//
-/*
-clientScoreboard_t Plugin_GetClientScoreboard(int);
-int Plugin_Cmd_GetInvokerUid();
-int Plugin_GetPlayerUid(int);
-int Plugin_GetSlotCount();
-qboolean Plugin_IsSvRunning();
-char *Plugin_GetPlayerName(int);
-void Plugin_AddCommand(char *, xcommand_t, int power);
-void *Plugin_Malloc(size_t);
-void Plugin_Free(void *);
-qboolean Plugin_TcpConnect( int, const char *);
-int Plugin_TcpGetData(int, void *, int);
-qboolean Plugin_TcpSendData(int, void*, int);
-void Plugin_TcpCloseConnection(int);
-qboolean Plugin_UdpSendData(netadr_t* to, void* data, int len);
-void Plugin_ServerPacketEvent(netadr_t* to, void* data, int len);
-void Plugin_SetPlayerUID(unsigned int clientslot, unsigned int uid);
-unsigned int Plugin_GetPlayerUID(unsigned int clientslot);
-const char* Plugin_GetPlayerGUID(unsigned int clientslot);
-void Plugin_SetPlayerGUID(unsigned int clientslot, const char* guid);
-void Plugin_SetPlayerNoPB(unsigned int clientslot);
-int Plugin_DoesServerUseUids(void);
-void Plugin_SetServerToUseUids(int useuids);
-int Plugin_GetLevelTime(void);
-int Plugin_GetServerTime(void);
-void Plugin_BoldPrintf(int,char *,...);
-*/
 
 #endif /*PLUGIN_HANDLER_H*/

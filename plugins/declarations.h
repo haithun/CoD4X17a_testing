@@ -1,6 +1,6 @@
 #ifndef PLUGIN_INCLUDES
 
-#error Please include pinc.h instead!
+    #error Please include pinc.h instead!
 
 #endif /*PLUGIN_INCLUDES*/
 
