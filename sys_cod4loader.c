@@ -9,6 +9,7 @@
 #include "scr_vm.h"
 #include "server.h"
 #include "scr_vm_functions.h"
+#include "sys_thread.h"
 
 #include <string.h>
 #include <unistd.h>
@@ -288,7 +289,12 @@ static byte patchblock_NET_OOB_CALL4[] = { 0x9B, 0x53, 0x17, 0x8,
 	SetJump(0x80a8068, ClientUserinfoChanged);
 	SetJump(0x81aa0be, Info_SetValueForKey);
 	SetJump(0x81d6fca, Sys_Milliseconds);
+	SetJump(0x81a9f8a, va);
 
+	SetJump(0x8140e9c, Sys_GetValue);
+	SetJump(0x8140efe, Sys_IsMainThread);
+	SetJump(0x81d6be4, Sys_EnterCriticalSection);
+	SetJump(0x81d6bc8, Sys_LeaveCriticalSection);
 	//ToDo build Mem_Init() on its own
 
 	*(char*)0x8215ccc = '\n'; //adds a missing linebreak

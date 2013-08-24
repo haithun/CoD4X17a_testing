@@ -37,7 +37,6 @@ qboolean Sys_MemoryProtectExec(void* startoffset, int len);
 qboolean Sys_MemoryProtectReadonly(void* startoffset, int len);
 const char *Sys_DefaultHomePath(void);
 const char *Sys_TempPath( void );
-jmp_buf* __cdecl Sys_GetValue( int );
 void __cdecl Sys_Init(void);
 
 #endif
