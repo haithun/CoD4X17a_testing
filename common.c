@@ -28,8 +28,6 @@
 #include "common_adrdefs.h"
 
 
-jmp_buf	abortframe;
-
 unsigned long long com_uFrameTime = 0;
 unsigned long long com_frameTime = 0;
 
@@ -589,11 +587,9 @@ void Com_Init(char* commandLine){
     int msec = 0;
     int	qport;
 
-    __asm__("int $3");
+    jmp_buf* abortframe = (jmp_buf*)Sys_GetValue(2);
 
-    Sys_GetValue(2);
-
-    if(setjmp(abortframe)){
+    if(setjmp(*abortframe)){
         Sys_Error(va("Error during Initialization:\n%s\n", com_lastError));
     }
     Com_Printf("%s %s %s build %i %s\n", GAME_STRING,Q3_VERSION,PLATFORM_STRING, BUILD_NUMBER, __DATE__);
@@ -763,7 +759,10 @@ void Com_Init(char* commandLine){
 
     Com_AddStartupCommands( );
 
-    if(setjmp(abortframe)){
+
+    abortframe = (jmp_buf*)Sys_GetValue(2);
+
+    if(setjmp(*abortframe)){
         Sys_Error(va("Error during Initialization:\n%s\n", com_lastError));
     }
     if(com_errorEntered) Com_ErrorCleanup();
@@ -844,7 +843,10 @@ __optimize3 void Com_Frame( void ) {
 	static unsigned long long	lastTime;
 	static unsigned int		com_frameNumber;
 
-        if(setjmp(abortframe)){
+
+        jmp_buf* abortframe = (jmp_buf*)Sys_GetValue(2);
+
+        if(setjmp(*abortframe)){
 
             Sys_EnterCriticalSection(2);
 
