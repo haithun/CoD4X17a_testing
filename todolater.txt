@@ -1,2 +1,0 @@
-#1 check Sys_Milliseconds() devision on unsigned long long
-#2 g_sv_messages.c -> client_t

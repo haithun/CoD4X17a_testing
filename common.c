@@ -934,7 +934,7 @@ __optimize3 void Com_Frame( void ) {
 	Com_EventLoop();
 	Cbuf_Execute (0 ,0);
 	NET_Sleep(0);
-	NET_TcpPacketEventLoop();
+	NET_TcpServerPacketEventLoop();
 	Cbuf_Execute (0 ,0);
 
 	SetAnimCheck(com_animCheck->boolean);

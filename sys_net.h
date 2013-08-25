@@ -107,19 +107,19 @@ void		NET_LeaveMulticast6(void);
 __optimize3 __regparm1 qboolean	NET_Sleep(unsigned int usec);
 void NET_Clear(void);
 const char*	NET_AdrMaskToString(netadr_t *adr);
-void		NET_TcpPacketEventLoop();
-qboolean	Sys_SendPacket( int length, const void *data, netadr_t *to );
 
+qboolean	Sys_SendPacket( int length, const void *data, netadr_t *to );
 qboolean	Sys_StringToAdr( const char *s, netadr_t *a, netadrtype_t family );
 
 //Does NOT parse port numbers, only base addresses.
 qboolean	Sys_IsLANAddress (netadr_t *adr);
 void		Sys_ShowIP(void);
-qboolean	NET_TCPSendData( int sock, const void *data, int length );
-int NET_TcpConnect( const char *remoteAdr );
-int NET_TcpGetData(SOCKET *sock, void* buf, const int buflen);
-void NET_TcpCloseConnection( SOCKET *sock );
 
+int NET_TcpSendData( int sock, const void *data, int length );
+void NET_TcpServerPacketEventLoop();
+int NET_TcpClientConnect( const char *remoteAdr );
+int NET_TcpClientGetData(int sock, void* buf, const int buflen);
+void NET_TcpCloseSocket(int socket);
 
 typedef enum {
 	TCP_AUTHWAIT,

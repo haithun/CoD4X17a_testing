@@ -584,7 +584,7 @@ void QDECL NET_PrintData( int sock, const char *format, ... ) {
 	va_end( argptr );
 
 	// send the datagram
-	NET_TCPSendData( sock, string, strlen( string ) );
+	NET_TcpSendData( sock, string, strlen( string ) );
 }
 
 /*
@@ -596,6 +596,6 @@ Sends a data message in an out-of-band datagram (only used for "PbSvSendToClient
 */
 qboolean NET_SendData( int sock, byte *data, int len ) {
 
-	return NET_TCPSendData( sock, data, len );
+	return NET_TcpSendData( sock, data, len );
 }
 
