@@ -3,6 +3,11 @@
 #include "xassets.h"
 #include "sys_patch.h"
 #include "qcommon_mem.h"
+#include "cmd.h"
+
+#include <string.h>
+
+void XAssetUsage_f();
 
 void R_Init(){
 
@@ -34,6 +39,9 @@ void R_Init(){
             XAssetscount = 5;
         }
         DB_LoadXAssets(&XZoneInfoStack[0],XAssetscount,0);
+
+        Cmd_AddCommand("XAssetUsage", XAssetUsage_f);
+
 }
 
 #define NUM_ASSETTYPES 33
@@ -81,7 +89,8 @@ typedef enum{
         Character,
         XModelAlias,
         RawFile,
-        StringTable
+        StringTable,
+        NumXAssets
 }assets_names_t;
 
 
@@ -95,6 +104,11 @@ typedef struct WeaponDefHeader_s{
         struct WeaponDefHeader_s*	next;
         char			data[2164];
 }WeaponDefHeader_t;
+
+typedef struct XAssetsHeaderCommon_s{
+        struct XAssetsHeaderCommon_s*	next;
+}XAssetsHeaderCommon_t;
+
 
 
 void XAssets_PatchLimits(){
@@ -110,10 +124,10 @@ void XAssets_PatchLimits(){
 	{
 		Com_Error(ERR_FATAL,"XAssets_PatchLimits: Failed to change memory to writeable\n");
 	}
-        DB_XAssetPool[XModel] = Z_Malloc(MAX_XMODELS*DB_GetXAssetTypeSize(XModel));
-        DB_XAssetPool[WeaponDef] = Z_Malloc(MAX_WEAPON*DB_GetXAssetTypeSize(WeaponDef));
-        DB_XAssetPool[FxEffectDef] = Z_Malloc(MAX_FX*DB_GetXAssetTypeSize(FxEffectDef));
-        DB_XAssetPool[GfxImage] = Z_Malloc(MAX_GFXIMAGE*DB_GetXAssetTypeSize(GfxImage));
+        DB_XAssetPool[XModel] = Z_Malloc(MAX_XMODELS*DB_GetXAssetTypeSize(XModel) +4);
+        DB_XAssetPool[WeaponDef] = Z_Malloc(MAX_WEAPON*DB_GetXAssetTypeSize(WeaponDef) +4);
+        DB_XAssetPool[FxEffectDef] = Z_Malloc(MAX_FX*DB_GetXAssetTypeSize(FxEffectDef) +4);
+        DB_XAssetPool[GfxImage] = Z_Malloc(MAX_GFXIMAGE*DB_GetXAssetTypeSize(GfxImage) +4);
 
 	if(DB_XAssetPool[XModel] == NULL || DB_XAssetPool[WeaponDef] == NULL || DB_XAssetPool[FxEffectDef] == NULL || DB_XAssetPool[GfxImage] == NULL)
 	{
@@ -150,38 +164,49 @@ void XAssets_PatchLimits(){
 
 }
 
+void XAssetUsage_f()
+{
+    int i, assettype, j, l;
+    void* *DB_XAssetPool = (void*)DB_XAssetPool_ADDR;
+    int *DB_XAssetPoolSize = (int*)g_poolsize_ADDR;
+    char* *g_assetNames = (char**)g_assetNames_ADDR;
 
-/*	char* *g_assetNames = (char**)g_assetNames_ADDR;
-	Com_Printf("Assetname: %s\n", g_assetNames[XModelPieces]);
-	Com_Printf("Assetname: %s\n", g_assetNames[PhysPreset]);
-	Com_Printf("Assetname: %s\n", g_assetNames[XAnimParts]);
-	Com_Printf("Assetname: %s\n", g_assetNames[XModel]);
-	Com_Printf("Assetname: %s\n", g_assetNames[Material]);
-	Com_Printf("Assetname: %s\n", g_assetNames[TechinqueSet]);
-	Com_Printf("Assetname: %s\n", g_assetNames[GfxImage]);
-	Com_Printf("Assetname: %s\n", g_assetNames[snd_alias_list_t]);
-	Com_Printf("Assetname: %s\n", g_assetNames[SndCurve]);
-	Com_Printf("Assetname: %s\n", g_assetNames[LoadedSound]);
-	Com_Printf("Assetname: %s\n", g_assetNames[Col_Map_sp]);
-	Com_Printf("Assetname: %s\n", g_assetNames[Col_Map_mp]);
-	Com_Printf("Assetname: %s\n", g_assetNames[Com_Map]);
-	Com_Printf("Assetname: %s\n", g_assetNames[Game_Map_sp]);
-	Com_Printf("Assetname: %s\n", g_assetNames[Game_Map_mp]);
-	Com_Printf("Assetname: %s\n", g_assetNames[MapEnts]);
-	Com_Printf("Assetname: %s\n", g_assetNames[GfxMaps]);
-	Com_Printf("Assetname: %s\n", g_assetNames[GfxLightDef]);
-	Com_Printf("Assetname: %s\n", g_assetNames[UIMaps]);
-	Com_Printf("Assetname: %s\n", g_assetNames[Font_s]);
-	Com_Printf("Assetname: %s\n", g_assetNames[MenuList]);
-	Com_Printf("Assetname: %s\n", g_assetNames[menuDef_t]);
-	Com_Printf("Assetname: %s\n", g_assetNames[LocalizeEntry]);
-	Com_Printf("Assetname: %s\n", g_assetNames[WeaponDef]);
-	Com_Printf("Assetname: %s\n", g_assetNames[SNDDriversGlobals]);
-	Com_Printf("Assetname: %s\n", g_assetNames[FxEffectDef]);
-	Com_Printf("Assetname: %s\n", g_assetNames[FxImpactTable]);
-	Com_Printf("Assetname: %s\n", g_assetNames[AIType]);
-	Com_Printf("Assetname: %s\n", g_assetNames[MPType]);
-	Com_Printf("Assetname: %s\n", g_assetNames[Character]);
-	Com_Printf("Assetname: %s\n", g_assetNames[XModelAlias]);
-	Com_Printf("Assetname: %s\n", g_assetNames[RawFile]);
-	Com_Printf("Assetname: %s\n", g_assetNames[StringTable]);*/
+    XAssetsHeaderCommon_t *header;
+
+    Com_Printf("XAsset usage:\n");
+    Com_Printf("Name                 Used  Free \n");
+    Com_Printf("-------------------- ----- -----\n");
+
+    for(assettype = 0; assettype < NumXAssets; assettype++)
+    {
+
+	header = DB_XAssetPool[assettype];
+
+	for(i = 0; i < DB_XAssetPoolSize[assettype]; i++)
+	{
+	    if(header == NULL)
+	        break;
+
+	    else
+	        header = header->next;
+	}
+
+	Com_Printf("%s", g_assetNames[assettype]);
+
+	l = 20 - strlen(g_assetNames[assettype]);
+	j = 0;
+
+	do
+	{
+		Com_Printf (" ");
+		j++;
+	} while(j < l);
+
+
+	Com_Printf(" %5d %5d\n", DB_XAssetPoolSize[assettype] - i, i);
+
+
+    }
+    Com_Printf("\n");
+}
+
