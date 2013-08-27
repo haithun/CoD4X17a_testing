@@ -2,6 +2,9 @@
 #include "sys_net.h"
 #include "msg.h"
 
+#ifndef __HL2RCON_H__
+#define __HL2RCON_H__
+
 /*
 ========================================================================
 
@@ -74,7 +77,7 @@ void HL2Rcon_ClearSourceRconAdminList( void );
 void HL2Rcon_SourceRconDisconnect(netadr_t *from, int socketfd, int connectionId);
 tcpclientstate_t HL2Rcon_SourceRconAuth(netadr_t *from, msg_t *msg, int socketfd, int *connectionId);
 void HL2Rcon_SourceRconSendConsole( const char* data, int msglen);
-void HL2Rcon_SourceRconSendChat( const char* data, int clientnum);
+void HL2Rcon_SourceRconSendChat( const char* data, int clientnum, int type);
 
 void HL2Rcon_SourceRconSendDataToEachClient( const byte* data, int msglen, int type);
 void HL2Rcon_SourceRconFlushRedirect(char* outputbuf, qboolean lastcommand);
@@ -86,3 +89,8 @@ void HL2Rcon_EventClientEnterTeam(int cid, int team);
 void HL2Rcon_EventClientEnterWorld(int cid);
 void HL2Rcon_EventClientLeave(int cid);
 void HL2Rcon_EventLevelStart();
+void HL2Rcon_Init();
+qboolean HL2Rcon_InfoAddAdmin(const char* line);
+void HL2Rcon_WriteAdminConfig(char* buffer, int size);
+
+#endif

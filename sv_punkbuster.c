@@ -4,6 +4,7 @@
 #include "sys_net.h"
 #include "server.h"
 #include "g_shared.h"
+#include "punkbuster.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -18,22 +19,19 @@
 
 __cdecl int PbSvSendToAddrPort(char* netdest, unsigned short port, int msgsize, char* message){
 
-//    char *sourcemsg;
-//    char msg[256];
+    char *sourcemsg;
+    char msg[256];
     netadr_t netadr;
 
-/*
+
     __asm("leal -0x836(,%%ebp,1), %%eax\n\t" :"=a"(sourcemsg));
 
     if(!Q_strncmp(sourcemsg, "PunkBuster Server:", 18)){
         Q_strncpyz(msg, sourcemsg, sizeof(msg));
         if(strstr(msg,"NoGUID*"))		//Prevent telling about Players without GUIDs to streaming-servers
             return 0;
-
-        if(SV_ClientAuthMode() < 1)	//Prevent streaming of any violations if players can have bad guids
-            return 0;
     }
-*/
+
 
     NET_StringToAdr(va("%s:%i", netdest, port), &netadr, NA_UNSPEC);
 
@@ -134,3 +132,8 @@ __cdecl char* PbSvGameQuery(int para_01, char* string){
     }
 }
 
+void PbCapatureConsoleOutput_wrapper(const char *msg, int msglen)
+{
+    PbCapatureConsoleOutput(msg, 4096);
+
+}

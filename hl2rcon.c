@@ -10,6 +10,8 @@
 #include "net_game_conf.h"
 #include "sha256.h"
 #include "punkbuster.h"
+#include "net_game.h"
+#include "g_sv_shared.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -28,6 +30,7 @@ Source Rcon facility
 
 
 sourceRcon_t sourceRcon;
+#define HL2RCON_SOURCEOUTPUTBUF_LENGTH 4096
 
 
 void HL2Rcon_SetSourceRconAdmin_f( void ){
@@ -438,12 +441,10 @@ void HL2Rcon_SourceRconSendGameLog( const char* data, int msglen)
 
 
 
-void HL2Rcon_SourceRconSendChat( const char* data, int clientnum)
+void HL2Rcon_SourceRconSendChat( const char* data, int clientnum, int mode)
 {
     HL2Rcon_SourceRconSendChatToEachClient( data, NULL, clientnum, qfalse);
 }
-
-#define HL2RCON_SOURCEOUTPUTBUF_LENGTH 4096
 
 void HL2Rcon_SourceRconSendDataToEachClient( const byte* data, int msglen, int type){
 
@@ -475,7 +476,7 @@ void HL2Rcon_SourceRconSendDataToEachClient( const byte* data, int msglen, int t
 			if(type == SERVERDATA_EVENT)
 				MSG_WriteData(&msg, data, msglen);
 			else
-				MSG_WriteString(&msg, (char*)data);
+				MSG_WriteBigString(&msg, (char*)data);
 
 			MSG_WriteByte(&msg, 0);
 
@@ -506,8 +507,6 @@ void HL2Rcon_SourceRconSendChatToEachClient( const char *text, rconUser_t *self,
 		if(!user->streamchat)
 			continue;
 
-		Com_Printf("Debug: %s\n", text);
-
 		MSG_Init(&msg, sourcemsgbuf, sizeof(sourcemsgbuf));
 		MSG_WriteLong(&msg, 0); //writing 0 for now
 		MSG_WriteLong(&msg, 0);
@@ -526,7 +525,7 @@ void HL2Rcon_SourceRconSendChatToEachClient( const char *text, rconUser_t *self,
 				    continue;
 				}
 			}
-			MSG_WriteString(&msg, user->rconUsername);
+			MSG_WriteBigString(&msg, user->rconUsername);
 
 		}else{
 
@@ -534,7 +533,7 @@ void HL2Rcon_SourceRconSendChatToEachClient( const char *text, rconUser_t *self,
 		}
 
 
-		MSG_WriteString(&msg, text);
+		MSG_WriteBigString(&msg, text);
 		MSG_WriteByte(&msg, 0);
 
 		//Adjust the length
@@ -563,7 +562,7 @@ void HL2Rcon_SourceRconFlushRedirect(char* outputbuf, qboolean lastcommand){
 	MSG_WriteLong(&msg, 0); //writing 0 for now
 	MSG_WriteLong(&msg, user->lastpacketid);
 	MSG_WriteLong(&msg, SERVERDATA_RESPONSE_VALUE);
-	MSG_WriteString(&msg, outputbuf);
+	MSG_WriteBigString(&msg, outputbuf);
 
 	MSG_WriteByte(&msg, 0);
 
@@ -602,24 +601,25 @@ void HL2Rcon_SayToPlayers(int clientnum, int team, const char* chatline)
 
 qboolean HL2Rcon_SourceRconEvent(netadr_t *from, msg_t *msg, int socketfd, int connectionId){
 
-	int packetlen;
-	int packettype;
-	int type;
-	int8_t team;
-	int8_t clientnum;
-	int32_t *updatelen;
-	char* command;
-	char* password;
-	char* chatline;
-	char sv_outputbuf[HL2RCON_SOURCEOUTPUTBUF_LENGTH];
-	msg_t msg2;
-	byte data[20000];
+//    int packetlen;
+    int packettype;
+    int type;
+    int8_t team;
+    int8_t clientnum;
+    int32_t *updatelen;
+    char* command;
+    char* password;
+    char* chatline;
+    char sv_outputbuf[HL2RCON_SOURCEOUTPUTBUF_LENGTH];
+    msg_t msg2;
+    byte data[20000];
 
-	MSG_BeginReading(msg);
-	packetlen = MSG_ReadLong(msg);
+    MSG_BeginReading(msg);
 
-	if(packetlen != msg->cursize - 4)//Not a source rcon packet
-		return qtrue;
+    while(msg->readcount < msg->cursize)
+    {
+	//packetlen = 
+	MSG_ReadLong(msg);
 
 	if(connectionId < 0 || connectionId >= MAX_RCONUSERS)
 		return qtrue;
@@ -635,7 +635,8 @@ qboolean HL2Rcon_SourceRconEvent(netadr_t *from, msg_t *msg, int socketfd, int c
 	{
 		case SERVERDATA_GETSTATUS:
 		//status request
-
+		    //Pop the end of body byte
+		    MSG_ReadByte(msg);
 
 		    MSG_Init(&msg2, data, sizeof(data));
 		    MSG_WriteLong(&msg2, 0); //writing 0 for now
@@ -647,65 +648,82 @@ qboolean HL2Rcon_SourceRconEvent(netadr_t *from, msg_t *msg, int socketfd, int c
 		    //Adjust the length
 		    updatelen = (int32_t*)msg2.data;
 		    *updatelen = msg2.cursize - 4;
-		    if(NET_SendData(socketfd, msg2.data, msg2.cursize))
-			return qtrue;
-
-		    return qfalse;
+		    NET_SendData(socketfd, msg2.data, msg2.cursize);
+		    break;
 
 		case SERVERDATA_EXECCOMMAND:
 
-		    command = MSG_ReadStringLine(msg);
+		    command = MSG_ReadString(msg);
+
+		    //Pop the end of body byte
+		    MSG_ReadByte(msg);
+
 		    Com_Printf("Rcon from: %s command: %s\n", NET_AdrToString(from), command);
 		    sourceRcon.redirectUser = connectionId+1;
-		    Com_BeginRedirect (sv_outputbuf, HL2RCON_SOURCEOUTPUTBUF_LENGTH, HL2Rcon_SourceRconFlushRedirect);
+		    Com_BeginRedirect (sv_outputbuf, sizeof(sv_outputbuf), HL2Rcon_SourceRconFlushRedirect);
 		    Cmd_ExecuteSingleCommand(0,0, command);
 
 		    if(!Q_stricmpn(command, "pb_sv_", 6)) PbServerForceProcess();
 
 		    Com_EndRedirect ();
 		    sourceRcon.redirectUser = 0;
-		    return qfalse;
+		    break;
 
 		case SERVERDATA_CHANGEPASSWORD:
 
 		    password = MSG_ReadString(msg);
+
+		    //Pop the end of body byte
+		    MSG_ReadByte(msg);
+
 		    sourceRcon.redirectUser = connectionId+1;
-		    Com_BeginRedirect (sv_outputbuf, HL2RCON_SOURCEOUTPUTBUF_LENGTH, HL2Rcon_SourceRconFlushRedirect);
+		    Com_BeginRedirect (sv_outputbuf, sizeof(sv_outputbuf), HL2Rcon_SourceRconFlushRedirect);
 		    HL2Rcon_ChangeSourceRconAdminPassword( password );
 		    Com_EndRedirect ();
 		    sourceRcon.redirectUser = 0;
-		    return qfalse;
+		    break;
 
 
 		case SERVERDATA_TURNONSTREAM:
 
 		    type = MSG_ReadByte(msg);
+
+		    //Pop the end of body byte
+		    MSG_ReadByte(msg);
+
 		    sourceRcon.redirectUser = connectionId+1;
-		    Com_BeginRedirect (sv_outputbuf, HL2RCON_SOURCEOUTPUTBUF_LENGTH, HL2Rcon_SourceRconFlushRedirect);
+		    Com_BeginRedirect (sv_outputbuf, sizeof(sv_outputbuf), HL2Rcon_SourceRconFlushRedirect);
 		    HL2Rcon_SourceRconStreaming_enable( type );
 		    Com_EndRedirect ();
 		    sourceRcon.redirectUser = 0;
-		    return qfalse;
+		    break;
 
 		case SERVERDATA_SAY:
 		    clientnum = MSG_ReadByte(msg); // -1 if Team or for all is used
 		    team = MSG_ReadByte(msg); // teamnumber or -1 if it is for all team or clientnum is set
 		    chatline = MSG_ReadString(msg);
+
+		    //Pop the end of body byte
+		    MSG_ReadByte(msg);
+
 		    sourceRcon.redirectUser = connectionId+1;
 		    HL2Rcon_SayToPlayers(clientnum, team, chatline);
 		    sourceRcon.redirectUser = 0;
-		    return qfalse;
+		    break;
 
 		default:
 		//Not a source rcon packet
 		Com_Printf("Not a valid source rcon packet from: %s received. Closing connection\n", NET_AdrToString(from));
 		return qtrue;
 	}
-
+    }
+    return qfalse;
 }
 
 
-void HL2Rcon_AddSourceAdminCommands(){
+
+
+void HL2Rcon_Init(){
 
 	static qboolean	initialized;
 
@@ -717,6 +735,13 @@ void HL2Rcon_AddSourceAdminCommands(){
 	Cmd_AddCommand ("rcondeladmin", HL2Rcon_UnsetSourceRconAdmin_f);
 	Cmd_AddCommand ("rconaddadmin", HL2Rcon_SetSourceRconAdmin_f);
 	Cmd_AddCommand ("rconlistadmins", HL2Rcon_ListSourceRconAdmins_f);
+
+	NET_TCPAddEventType(HL2Rcon_SourceRconEvent, HL2Rcon_SourceRconAuth, HL2Rcon_SourceRconDisconnect, 9038723);
+
+	Com_AddRedirect(HL2Rcon_SourceRconSendConsole);
+	G_PrintAddRedirect(HL2Rcon_SourceRconSendGameLog);
+	G_AddChatRedirect(HL2Rcon_SourceRconSendChat);
+
 }
 
 
@@ -763,4 +788,48 @@ void HL2Rcon_EventClientEnterTeam(int cid, int team){
 
     HL2Rcon_SourceRconSendDataToEachClient( data, 3, SERVERDATA_EVENT);
 
+}
+
+qboolean HL2Rcon_InfoAddAdmin(const char* line)
+{
+        char password[65];
+        char salt[129];
+        char username[32];
+        int power;
+
+        power = atoi(Info_ValueForKey(line, "power"));
+        Q_strncpyz(password, Info_ValueForKey(line, "password") , sizeof(password));
+        Q_strncpyz(salt, Info_ValueForKey(line, "salt") , sizeof(salt));
+        Q_strncpyz(username, Info_ValueForKey(line, "username") , sizeof(username));
+
+        if(!HL2Rcon_AddSourceRconAdminToList(username, password, salt, power)){
+            Com_Printf("Error: duplicated username or bad power or too many admins\n");
+            return qfalse;
+        }
+        return qtrue;
+}
+
+void HL2Rcon_WriteAdminConfig(char* buffer, int size)
+{
+    char infostring[MAX_INFO_STRING];
+    int i;
+    rconLogin_t *rconadmin;
+
+    Q_strcat(buffer, size, "\n//RconAdmins\n");
+
+    for ( rconadmin = sourceRcon.rconUsers, i = 0; i < MAX_RCONLOGINS ; rconadmin++, i++ ){
+
+        *infostring = 0;
+
+	if(!*rconadmin->username)
+		continue;
+
+        Info_SetValueForKey(infostring, "type", "rconAdmin");
+        Info_SetValueForKey(infostring, "power", va("%i", rconadmin->power));
+        Info_SetValueForKey(infostring, "password", rconadmin->sha256);
+        Info_SetValueForKey(infostring, "salt", rconadmin->salt);
+        Info_SetValueForKey(infostring, "username", rconadmin->username);
+        Q_strcat(buffer, size, infostring);
+        Q_strcat(buffer, size, "\\\n");
+    }
 }

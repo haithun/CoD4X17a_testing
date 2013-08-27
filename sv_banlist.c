@@ -260,6 +260,13 @@ void SV_PlayerAddBanByip(netadr_t *remote, char *reason, int uid, char* guid, in
     unsigned int oldestTime = 0;
     int duration;
 
+    if(!remote)
+    {
+        Com_PrintError("SV_PlayerAddBanByip: IP address is NULL\n");
+        return;
+
+    }
+
     for(list = &ipBans[0], i = 0; i < 1024; list++, i++){	//At first check whether we have already an entry for this player
         if(NET_CompareBaseAdr(remote, &list->remote)){
             break;
@@ -285,13 +292,6 @@ void SV_PlayerAddBanByip(netadr_t *remote, char *reason, int uid, char* guid, in
 
         Q_strncpyz(list->guid, guid, sizeof(list->guid));
 
-    }else{
-
-        if(uid < 1)
-        {
-            Com_PrintError("SV_PlayerAddBanByip: Bad Guid and bad Uid\n");
-            return;
-        }
     }
 
     list->expire = expire;

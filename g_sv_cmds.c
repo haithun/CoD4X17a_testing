@@ -503,7 +503,7 @@ __cdecl void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *cha
 
 #define MAX_REDIRECTDESTINATIONS 4
 
-static void (*rd_destinations[MAX_REDIRECTDESTINATIONS])( char *buffer, int client, int mode );
+static void (*rd_destinations[MAX_REDIRECTDESTINATIONS])( const char *buffer, int client, int mode );
 
 void G_ChatRedirect(char* msg, int client, int mode)
 {
@@ -526,7 +526,7 @@ void G_ChatRedirect(char* msg, int client, int mode)
 */
 
 
-void G_AddChatRedirect(void (*rd_dest)( char *, int, int))
+void G_AddChatRedirect(void (*rd_dest)( const char *, int, int))
 {
     int i;
 

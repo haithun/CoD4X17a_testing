@@ -24,13 +24,21 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "q_shared.h"
 #include "sys_net.h"
+#include "msg.h"
 
 void NET_UDPPacketEvent(netadr_t* from, void* data, int len);
 unsigned int NET_TimeGetTime();
 
 void NET_TCPConnectionClosed(netadr_t* adr, int sock, int connectionId, int serviceId);
 tcpclientstate_t NET_TCPAuthPacketEvent(netadr_t* remote, byte* bufData, int cursize, int sock, int* connectionId, int *serviceId);
-qboolean NET_TCPPacketEvent(netadr_t* remote, byte* bufData, int cursize, int sock, int connectionId, int serviceId);
+void NET_TCPPacketEvent(netadr_t* remote, byte* bufData, int cursize, int sock, int connectionId, int serviceId);
+
+void NET_TCPAddEventType(
+        qboolean (*tcpevent)(netadr_t* from, msg_t* msg, int socketfd, int connectionId),
+        tcpclientstate_t (*tcpauthevent)(netadr_t* from, msg_t* msg, int socketfd, int *connectionId),
+        void (*tcpconncloseevent)(netadr_t* from, int socketfd, int connectionId),
+        int serviceId
+);
 
 #endif
 

@@ -346,7 +346,7 @@ qboolean Cmd_InfoSetPower( const char *infostring )
 
 void Cmd_WritePowerConfig(char* buffer, int size)
 {
-    char infostring[1024];
+    char infostring[MAX_INFO_STRING];
 
     Q_strcat(buffer, size,"\n//Minimum power settings\n");
     cmd_function_t *cmd;

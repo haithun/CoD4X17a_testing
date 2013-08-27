@@ -106,6 +106,8 @@ void QDECL Com_PrintAdministrativeLog( const char *msg ) {
 void Com_PrintLogfile( const char *msg )
 {
 
+	Sys_EnterCriticalSection(5);
+
 	if ( com_logfile && com_logfile->integer ) {
         // TTimo: only open the qconsole.log if the filesystem is in an initialized state
         // also, avoid recursing in the qconsole.log opening (i.e. if fs_debug is on)

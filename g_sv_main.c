@@ -184,7 +184,7 @@ __cdecl void QDECL G_LogPrintf( const char *fmt, ... ) {
 
 #define MAX_REDIRECTDESTINATIONS 4
 
-static void (*rd_destinations[MAX_REDIRECTDESTINATIONS])( char *buffer, int len );
+static void (*rd_destinations[MAX_REDIRECTDESTINATIONS])( const char *buffer, int len );
 
 void G_PrintRedirect(char* msg, int len)
 {
@@ -207,7 +207,7 @@ void G_PrintRedirect(char* msg, int len)
 */
 
 
-void G_PrintAddRedirect(void (*rd_dest)( char *, int))
+void G_PrintAddRedirect(void (*rd_dest)( const char *, int))
 {
     int i;
 

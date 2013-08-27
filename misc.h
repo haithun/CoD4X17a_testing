@@ -19,6 +19,7 @@ void __cdecl DObjInit(void);
 void __cdecl SL_Init(void);
 void __cdecl SL_RemoveRefToString( unsigned int );
 char* SL_ConvertToString(unsigned int index);
+void AddRedirectLocations(void);
 
 #endif
 
@@ -26,4 +27,3 @@ char* SL_ConvertToString(unsigned int index);
 void __cdecl HECmd_SetText)( scr_entref_t );
 tHECmd_SetText HECmd_SetText = (tHECmd_SetText)(0x808f7f6);
 */
-

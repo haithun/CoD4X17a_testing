@@ -19,6 +19,7 @@
 #include "netchan.h"
 #include "server.h"
 #include "nvconfig.h"
+#include "hl2rcon.h"
 
 #include <string.h>
 #include <setjmp.h>
@@ -766,6 +767,12 @@ void Com_Init(char* commandLine){
         Sys_Error(va("Error during Initialization:\n%s\n", com_lastError));
     }
     if(com_errorEntered) Com_ErrorCleanup();
+
+
+    HL2Rcon_Init();
+
+    AddRedirectLocations();
+
 }
 
 

@@ -2144,7 +2144,7 @@ int NET_TcpSendData( int sock, const void *data, int length ) {
 
 			if( err == EAGAIN )
 			{
-				Com_Printf("NET_TcpSendData: Command overflow\n");
+				Com_PrintNoRedirect("NET_TcpSendData: Command overflow\n");
 			}else{
 				Com_PrintWarningNoRedirect ("NET_SendTCPPacket: Couldn't send data to remote host: %s\n", NET_ErrorString());
 			}
@@ -2210,7 +2210,7 @@ int NET_TcpServerGetPacket(tcpConnections_t *conn, void *netmsg, int maxsize, qb
 
 		if(conn->state >= TCP_AUTHSUCCESSFULL)
 		{
-			Com_Printf("Connection closed by client: %s\n", NET_AdrToString(&conn->remote));
+			Com_PrintNoRedirect("Connection closed by client: %s\n", NET_AdrToString(&conn->remote));
 		}
 		NET_TcpCloseSocket(conn->sock);
 		return -1;
@@ -2288,7 +2288,7 @@ void NET_TcpServerPacketEventLoop(){
 
 						}else if(conn->state == TCP_AUTHSUCCESSFULL){
 							tcpServer.activeConnectionCount++;
-							Com_Printf("New connection accepted for: %s from type: %d\n", NET_AdrToString(&conn->remote), conn->serviceId);
+							Com_PrintNoRedirect("New connection accepted for: %s from type: %d\n", NET_AdrToString(&conn->remote), conn->serviceId);
 						}
 						break;
 
@@ -2302,7 +2302,6 @@ void NET_TcpServerPacketEventLoop(){
 						cursize = 0;
 						do{
                                                         ret = NET_TcpServerGetPacket(conn, bufData + cursize, sizeof(bufData) - cursize, qtrue);
-                                                        cursize += ret;
                                                         if(ret < 1)
                                                             break;
                                                         else
@@ -2312,13 +2311,10 @@ void NET_TcpServerPacketEventLoop(){
 
 						if(cursize >= sizeof(bufData))
 						{
-							Com_PrintWarning( "NET_TcpServerPacketEventLoop: Oversize packet from %s\n", NET_AdrToString (&conn->remote));
+							Com_PrintWarningNoRedirect( "NET_TcpServerPacketEventLoop: Oversize packet from %s\n", NET_AdrToString (&conn->remote));
 							cursize = sizeof(bufData);
 						}
-						if(NET_TCPPacketEvent(&conn->remote, bufData, cursize, conn->sock, conn->connectionId, conn->serviceId))
-						{
-							NET_TcpCloseSocket(conn->sock);
-						}
+						NET_TCPPacketEvent(&conn->remote, bufData, cursize, conn->sock, conn->connectionId, conn->serviceId);
 						break;
 					}
 

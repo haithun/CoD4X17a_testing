@@ -34,7 +34,7 @@ void QDECL Com_DPrintfWrapper( int drop, const char *fmt, ...);
 void QDECL Com_DPrintNoRedirect( const char *fmt, ... );
 void QDECL Com_Error( int a, const char *error, ...);
 void QDECL Com_PrintRedirect(char *msg, int msglen);
-void Com_AddRedirect(void (*rd_dest)( char *, int));
+void Com_AddRedirect(void (*rd_dest)( const char *, int));
 void __cdecl Com_ErrorCleanup(void);
 void QDECL Com_PrintScriptRuntimeWarning( const char *fmt, ... );
 __cdecl void Com_PrintMessage( int dumbIWvar, char *msg, msgtype_t type);

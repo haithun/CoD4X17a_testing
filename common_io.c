@@ -67,6 +67,8 @@ void Com_StopRedirect (void)
 
 __cdecl void Com_PrintMessage( int dumbIWvar, char *msg, msgtype_t type) {
 
+	//secures calls to Com_PrintMessage from recursion while redirect printing
+	static qboolean lock = qfalse;
 
 	if(dumbIWvar == 6) return;
 
@@ -74,8 +76,11 @@ __cdecl void Com_PrintMessage( int dumbIWvar, char *msg, msgtype_t type) {
 
 	Sys_EnterCriticalSection(5);
 
-	if ( type != MSG_NORDPRINT) {
+	if ( type != MSG_NORDPRINT && !lock) {
+
+		lock = qtrue;
 		Com_PrintRedirect(msg, msglen);
+		lock = qfalse;
 
 		if ( rd_buffer ) {
 			if(!rd_flush){
@@ -83,7 +88,11 @@ __cdecl void Com_PrintMessage( int dumbIWvar, char *msg, msgtype_t type) {
 				return;
 			}
 			if ((msglen + strlen(rd_buffer)) > (rd_buffersize - 1)) {
+
+				lock = qtrue;
 				rd_flush(rd_buffer, qfalse);
+				lock = qfalse;
+
 				*rd_buffer = 0;
 			}
 			Q_strcat(rd_buffer, rd_buffersize, msg);
@@ -96,6 +105,8 @@ __cdecl void Com_PrintMessage( int dumbIWvar, char *msg, msgtype_t type) {
 	}
 	// echo to dedicated console and early console
 	Sys_Print( msg );
+
+	Sys_EnterCriticalSection(5);
 
 	// logfile
 	Com_PrintLogfile( msg );
@@ -302,7 +313,7 @@ void QDECL Com_PrintScriptRuntimeWarning(const char *fmt, ...)
 
 #define MAX_REDIRECTDESTINATIONS 4
 
-static void (*rd_destinations[MAX_REDIRECTDESTINATIONS])( char *buffer, int len );
+static void (*rd_destinations[MAX_REDIRECTDESTINATIONS])( const char *buffer, int len );
 
 
 void Com_PrintRedirect(char* msg, int msglen)
@@ -330,7 +341,7 @@ void Com_PrintRedirect(char* msg, int msglen)
 */
 
 
-void Com_AddRedirect(void (*rd_dest)( char *, int))
+void Com_AddRedirect(void (*rd_dest)(const char *, int))
 {
     int i;
 

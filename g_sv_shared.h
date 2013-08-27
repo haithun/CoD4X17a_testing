@@ -10,7 +10,7 @@
 void Init_CallVote(void);
 __cdecl void Cmd_CallVote_f( gentity_t *ent );
 void G_ChatRedirect(char* msg, int client, int mode);
-void G_AddChatRedirect(void (*rd_dest)( char *, int, int));
+void G_AddChatRedirect(void (*rd_dest)( const char *, int, int));
 qboolean Cmd_FollowClient_f(gentity_t *ent, int clientnum);
 __cdecl void StopFollowingOnDeath( gentity_t *ent );
 __cdecl void G_Say( gentity_t *ent, gentity_t *target, int mode, const char *chatText );
@@ -38,7 +38,7 @@ void __cdecl SV_GameSendServerCommand(int clientnum, int svscmd_type, const char
 void G_ShowMotd(unsigned int clnum);
 void QDECL G_LogPrintf( const char *fmt, ... );
 void G_PrintRedirect(char* msg, int len);
-void G_PrintAddRedirect(void (*rd_dest)( char *, int));
+void G_PrintAddRedirect(void (*rd_dest)( const char *, int));
 __cdecl void ClientSpawn(gentity_t* ent, vec3_t* px, vec3_t* py);
 __cdecl void ClientUserinfoChanged( int clientNum );
 

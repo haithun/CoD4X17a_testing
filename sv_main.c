@@ -1055,7 +1055,7 @@ __optimize3 __regparm2 void SV_PacketEvent( netadr_t *from, msg_t *msg ) {
 				if(msg->cursize > 2000){
 					//This will fix up a buffer overflow.
 					//CoD4's message Decompress-function has no buffer overrun check
-					//Because the compression algorith is very poor this is already sufficent
+					//Because the compression algorithm is very poor this is already sufficent
 					Com_Printf("Oversize message received from: %s\n", cl->name);
 					SV_DropClient(cl, "Oversize client message");
 				}else{

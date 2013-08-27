@@ -24,11 +24,6 @@ NV_ParseConfigLine
 
 qboolean NV_ParseConfigLine(char* line, int linenumber){
 
-/*    char username[32];
-    char password[65];
-    char salt[129];
-    char tmp[1024];
-*/
     if(!Q_stricmp(Info_ValueForKey(line, "type") , "cmdMinPower")){
 
         if(!Cmd_InfoSetPower( line )){
@@ -38,16 +33,12 @@ qboolean NV_ParseConfigLine(char* line, int linenumber){
         return qtrue;
 
     }else if(!Q_stricmp(Info_ValueForKey(line, "type") , "rconAdmin")){
-/*
-        power = atoi(Info_ValueForKey(line, "power"));
-        Q_strncpyz(password, Info_ValueForKey(line, "password") , sizeof(password));
-        Q_strncpyz(salt, Info_ValueForKey(line, "salt") , sizeof(salt));
-        Q_strncpyz(username, Info_ValueForKey(line, "username") , sizeof(username));
 
-        if(!HL2Rcon_AddSourceRconAdminToList(username, password, salt, power)){
-            Com_Printf("Error: duplicated username or bad power or too many admins (line: %d)\n", linenumber);
+        if(!HL2Rcon_InfoAddAdmin( line ))
+        {
+            Com_Printf("Error at line: %d\n", linenumber);
             return qfalse;
-        }*/
+        }
         return qtrue;
 
     }else if(!Q_stricmp(Info_ValueForKey(line, "type") , "admin")){
@@ -135,24 +126,7 @@ void NV_WriteConfig(){
 
     Cmd_WritePowerConfig( buffer, MAX_NVCONFIG_SIZE );
     SV_RemoteCmdWriteAdminConfig( buffer, MAX_NVCONFIG_SIZE );
-
-/*
-    rconLogin_t *rconadmin;
-    Q_strcat(buffer,MAX_NVCONFIG_SIZE,"\n//RconAdmins\n");
-
-    for ( rconadmin = sourceRcon.rconUsers, i = 0; i < MAX_RCONLOGINS ; rconadmin++, i++ ){
-        *infostring = 0;
-	if(!*rconadmin->username)
-		continue;
-        Info_SetValueForKey(infostring, "type", "rconAdmin");
-        Info_SetValueForKey(infostring, "power", va("%i", rconadmin->power));
-        Info_SetValueForKey(infostring, "password", rconadmin->sha256);
-        Info_SetValueForKey(infostring, "salt", rconadmin->salt);
-        Info_SetValueForKey(infostring, "username", rconadmin->username);
-        Q_strcat(buffer,MAX_NVCONFIG_SIZE, infostring);
-        Q_strcat(buffer,MAX_NVCONFIG_SIZE, "\\\n");
-    }
-*/
+    HL2Rcon_WriteAdminConfig( buffer, MAX_NVCONFIG_SIZE );
 
     FS_SV_WriteFile("nvconfig.dat", buffer, strlen(buffer));
     Hunk_FreeTempMemory( buffer );

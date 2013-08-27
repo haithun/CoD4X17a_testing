@@ -6,5 +6,6 @@ void __cdecl PbServerProcessEvents(void);
 const char* __cdecl PbAuthClient( const char* NETAdrString, qboolean cl_punkbuster, const char* pbguid);
 void __cdecl PbPassConnectString( const char* NETAdrString, const char* connectstring);
 void __cdecl PbSvAddEvent( int event_type, int clientnum, int sizeofstring, char* string);
-void __cdecl PbCapatureConsoleOutput(char *msg, int size);
+void __cdecl PbCapatureConsoleOutput(const char *msg, int size);
 void __cdecl PbServerForceProcess( );
+void PbCapatureConsoleOutput_wrapper(const char *msg, int msglen);
