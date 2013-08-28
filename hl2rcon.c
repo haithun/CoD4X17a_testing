@@ -713,7 +713,7 @@ qboolean HL2Rcon_SourceRconEvent(netadr_t *from, msg_t *msg, int socketfd, int c
 
 		default:
 		//Not a source rcon packet
-		Com_Printf("Not a valid source rcon packet from: %s received. Closing connection\n", NET_AdrToString(from));
+		Com_Printf("Not a valid source rcon packet from: %s received. Type: %d - Closing connection\n", NET_AdrToString(from), packettype);
 		return qtrue;
 	}
     }

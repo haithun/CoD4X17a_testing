@@ -1924,6 +1924,9 @@ void SV_WriteRconStatus( msg_t* msg ) {
 
 	infostring[0] = 0;
 
+	if(!com_sv_running->boolean)
+            return;
+
 	strcpy( infostring, Cvar_InfoString( 0, (CVAR_SERVERINFO | CVAR_NORESTART)));
 	// echo back the parameter to status. so master servers can use it as a challenge
 	// to prevent timed spoofed reply packets that add ghost servers
